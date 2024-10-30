@@ -2,21 +2,24 @@
 from datetime import date
 
 from pydantic import BaseModel
+from app.models.schema.owner import OwnerBase
 
 
 # Schema for Abstract Dog
 class DogBase(BaseModel):
+    id: int
     name: str
     about: str
     age: int
+    is_vaccinated: bool
 
 
 class DogCreate(DogBase):
-    pass
+    image_data: bytes = None  # La imagen como bytes opcional
+    image_type: str = None  # El tipo de imagen
 
 
 class DogResponse(DogBase):
-    id: int
 
     class Config:
         orm_mode = True
@@ -24,30 +27,28 @@ class DogResponse(DogBase):
 
 # Schema for Static Dogs
 class StaticDogBase(DogBase):
-    adopted_date: date
+    pass
 
 
 class StaticDogCreate(StaticDogBase):
+    pass
+
 
 class StaticDogResponse(StaticDogBase):
-    id: int
-
-
     class Config:
         orm_mode = True
 
+
 # Schema for Adoption Dogs
 class AdoptionDogBase(DogBase):
-    adopted_date: date
+    pass
 
 
 class AdoptionDogCreate(AdoptionDogBase):
-
-
+    pass
 
 
 class AdoptionDogResponse(AdoptionDogBase):
-    id: int
 
     class Config:
         orm_mode = True
@@ -56,6 +57,7 @@ class AdoptionDogResponse(AdoptionDogBase):
 # Schema for adopted dogs
 class AdoptedDogBase(DogBase):
     adopted_date: date
+    owner: OwnerBase
 
 
 class AdoptedDogCreate(AdoptedDogBase):
@@ -63,7 +65,6 @@ class AdoptedDogCreate(AdoptedDogBase):
 
 
 class AdoptedDogResponse(AdoptedDogBase):
-    id: int
     owner_id: int
 
     class Config:

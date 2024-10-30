@@ -1,9 +1,6 @@
 # app/models/schema/owner.py
 
 from pydantic import BaseModel
-from typing import List, Optional
-from datetime import date
-from app.models.schema.dog import DogResponse
 
 
 class OwnerBase(BaseModel):

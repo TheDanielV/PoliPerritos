@@ -8,7 +8,7 @@ from app.db.session import get_db
 router = APIRouter()
 
 
-@router.post('/', response_model=dict)
+@router.post('/owner/', response_model=dict)
 def create_new_owner(owner: OwnerCreate, db: Session = Depends(get_db)):
     result = create_owner(db, owner)
     if result is None:

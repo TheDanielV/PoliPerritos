@@ -24,7 +24,12 @@ def create_owner(db: Session, owner: OwnerCreate):
         return {"detail": ie}
 
 
+def create_owner_without_commit(db: Session, owner: Owner):
+    db.add(owner)
 
 
-
-
+def get_owner_by_id(db: Session, owner_id: int):
+    """
+    Devuelve un perro estatico por id.
+    """
+    return db.query(Owner).filter(Owner.id == owner_id).first()
