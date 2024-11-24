@@ -1,21 +1,23 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1.endpoints import dog, owner, auth
+from app.api.v1.endpoints import dog, owner, auth, visit
 from app.db.init_db import init_db
 
 app = FastAPI()
 
-# Aquí agregas el middleware de CORS
+origins = ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permitir todos los orígenes
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],  # Permitir todos los métodos
-    allow_headers=["*"],  # Permitir todas las cabeceras
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(dog.router, prefix="/dog", tags=["dog"])
 app.include_router(owner.router, prefix="/owner", tags=["owner"])
+app.include_router(visit.router, prefix="/visits", tags=["visits"])
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 
 

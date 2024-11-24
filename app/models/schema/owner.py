@@ -6,7 +6,7 @@ from pydantic import BaseModel
 class OwnerBase(BaseModel):
     name: str
     direction: str
-    cellphone: int
+    cellphone: str
 
 
 class OwnerCreate(OwnerBase):

@@ -2,8 +2,9 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.crud.owner import *
+from app.crud.owner import create_owner
 from app.db.session import get_db
+from app.models.schema.owner import OwnerCreate
 
 router = APIRouter()
 

@@ -1,25 +1,32 @@
 # app/models/domain/dog.py
 from abc import ABC, abstractclassmethod
+from enum import Enum
 from xmlrpc.client import Boolean
 
-from sqlalchemy import Column, Integer, String, ForeignKey, Date, Boolean, LargeBinary
+from sqlalchemy import Column, Integer, String, ForeignKey, Date, Boolean, Enum as SQLAEnum
+from sqlalchemy.dialects.mysql import LONGBLOB
 from sqlalchemy.orm import relationship
 from app.models.schema.owner import OwnerCreate
 from app.models.domain.owner import Owner
 from app.db.database import Base
 
 
-# Se crea el modelo paara un usuario
+# Enumeración para el sexo
+class Gender(str, Enum):
+    MALE = "male"
+    FEMALE = "female"
+
+
 class Dog(Base):
     __abstract__ = True
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255), index=True, nullable=False)
-    about = Column(String(255), index=True, nullable=False)
+    name = Column(String(255), nullable=False)
+    about = Column(String(255), nullable=True)
     age = Column(Integer, nullable=False)
-    is_vaccinated = Column(Boolean, unique=False)
-    image_data = Column(LargeBinary, nullable=True)
-    image_type = Column(String(255), nullable=True)
+    is_vaccinated = Column(Boolean, unique=False, nullable=False)
+    image = Column(LONGBLOB, nullable=True)
+    gender = Column(SQLAEnum(Gender), default=False, nullable=False)
 
 
 class StaticDog(Dog):
@@ -41,8 +48,10 @@ class AdoptionDog(Dog):
             about=self.about,
             age=self.age,
             is_vaccinated=self.is_vaccinated,
+            gender=self.gender,
             adopted_date=date,
-            owner=owner
+            owner=owner,
+            image=self.image
 
         )
         return adopted_dog
@@ -53,7 +62,8 @@ class AdoptedDog(Dog):
 
     adopted_date = Column(Date, index=True)
     owner_id = Column(Integer, ForeignKey('owner.id'))
-    owner = relationship("Owner", back_populates="adopted_dogs")
+    owner = relationship("Owner", back_populates="adopted_dogs")  # Relacion con Dueño
+    visits = relationship('Visit', back_populates='adopted_dog', cascade='all, delete-orphan')  # Relación con Visit
 
     def unadopt(self):
         adoption_dog = AdoptionDog(
@@ -61,6 +71,8 @@ class AdoptedDog(Dog):
             name=self.name,
             about=self.about,
             age=self.age,
-            is_vaccinated=self.is_vaccinated
+            gender=self.gender,
+            is_vaccinated=self.is_vaccinated,
+            image=self.image
         )
         return adoption_dog

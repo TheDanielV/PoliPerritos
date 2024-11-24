@@ -1,26 +1,29 @@
 # app/models/schema/dog.py
 from datetime import date
+from typing import Optional
 
-from pydantic import BaseModel
-from app.models.schema.owner import OwnerBase
+from fastapi import UploadFile, File
+from pydantic import BaseModel, Field
+from app.models.schema.owner import OwnerBase, OwnerResponse
+from app.models.domain.dog import Gender
 
 
 # Schema for Abstract Dog
 class DogBase(BaseModel):
     id: int
     name: str
-    about: str
+    about: Optional[str]
     age: int
     is_vaccinated: bool
+    image: Optional[str]
+    gender: Gender
 
 
 class DogCreate(DogBase):
-    image_data: bytes = None  # La imagen como bytes opcional
-    image_type: str = None  # El tipo de imagen
+    pass
 
 
 class DogResponse(DogBase):
-
     class Config:
         orm_mode = True
 
@@ -49,7 +52,6 @@ class AdoptionDogCreate(AdoptionDogBase):
 
 
 class AdoptionDogResponse(AdoptionDogBase):
-
     class Config:
         orm_mode = True
 
@@ -64,8 +66,18 @@ class AdoptedDogCreate(AdoptedDogBase):
     owner_id: int
 
 
-class AdoptedDogResponse(AdoptedDogBase):
-    owner_id: int
+class AdoptedDogResponse(BaseModel):
+    id: int
+    name: str
+    about: Optional[str]
+    age: int
+    is_vaccinated: bool
+    gender: Gender
+    image: Optional[str]
+    adopted_date: date
+    owner: OwnerResponse
 
     class Config:
         orm_mode = True
+
+

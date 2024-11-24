@@ -12,6 +12,6 @@ class Owner(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), index=True, nullable=False)
     direction = Column(String(255), index=True, nullable=False)
-    cellphone = Column(Integer, nullable=False)
+    cellphone = Column(String(255), nullable=False)
     # Relación uno a muchos con AdoptedDog
     adopted_dogs = relationship("AdoptedDog", back_populates="owner")

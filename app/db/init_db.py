@@ -1,6 +1,7 @@
 from app.db.database import Base, engine
 import app.models.domain.dog
 import app.models.domain.owner
+import app.models.domain.visit
 
 
 # Se inicia labase de datos y de ser el caso crea la tabla
