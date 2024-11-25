@@ -12,7 +12,7 @@ from app.models.schema.user import TokenData
 from app.models.schema.visit import VisitCreate, VisitResponse, VisitUpdate
 
 from app.models.domain.user import Role
-from app.services.images import verify_image_size
+from app.services.images_control_service import verify_image_size
 
 router = APIRouter()
 

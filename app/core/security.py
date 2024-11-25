@@ -78,6 +78,7 @@ def create_auth_user(db: Session, user: UserCreate):
     db_auth_user = User(
         username=user.username,
         hashed_password=get_password_hash(user.password),
+        email=user.email,
         role=user.role,
         is_active=False
     )

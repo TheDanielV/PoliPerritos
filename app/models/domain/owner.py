@@ -1,5 +1,5 @@
 # app/models/domain/owner.py
-from sqlalchemy import Column, Integer, String, ForeignKey, Date
+from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 
 from app.db.database import Base

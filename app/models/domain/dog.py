@@ -1,7 +1,5 @@
 # app/models/domain/dog.py
-from abc import ABC, abstractclassmethod
 from enum import Enum
-from xmlrpc.client import Boolean
 
 from sqlalchemy import Column, Integer, String, ForeignKey, Date, Boolean, Enum as SQLAEnum
 from sqlalchemy.dialects.mysql import LONGBLOB
