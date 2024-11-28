@@ -17,6 +17,10 @@ class DogBase(BaseModel):
     is_vaccinated: bool
     image: Optional[str]
     gender: Gender
+    entry_date: Optional[date]
+    is_sterilized: bool
+    is_dewormed: bool
+    operation: Optional[str]
 
 
 class DogCreate(DogBase):
@@ -72,8 +76,12 @@ class AdoptedDogResponse(BaseModel):
     about: Optional[str]
     age: int
     is_vaccinated: bool
-    gender: Gender
     image: Optional[str]
+    gender: Gender
+    entry_date: Optional[date]
+    is_sterilized: bool
+    is_dewormed: bool
+    operation: Optional[str]
     adopted_date: date
     owner: OwnerResponse
 

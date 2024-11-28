@@ -66,7 +66,8 @@ async def create_new_visit(visit: VisitCreate,
 
 
 @router.get('/all/', response_model=List[VisitResponse])
-async def get_visits(db: Session = Depends(get_db)):
+async def get_visits(db: Session = Depends(get_db),
+                     current_user: TokenData = Depends(get_current_user)):
     """
     English:
     --------
@@ -77,8 +78,8 @@ async def get_visits(db: Session = Depends(get_db)):
     Lee todas las visitas.
 
     """
-    #if current_user.role.value not in [Role.ADMIN, Role.AUXILIAR]:
-        #raise HTTPException(status_code=403, detail="Not enough permissions")
+    if current_user.role.value not in [Role.ADMIN, Role.AUXILIAR]:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
     visits_raw = get_all_visits(db)
     if not visits_raw:
         raise HTTPException(status_code=404, detail="No hay visitas")
@@ -195,11 +196,14 @@ async def update_visit_by_id(visit_update: VisitUpdate, db: Session = Depends(ge
             image_data = base64.b64decode(visit_update.evidence)
         except (ValueError, TypeError):
             raise HTTPException(status_code=400, detail="Invalid image encoding")
+    else:
+        image_data = read_visit_by_id(db, visit_update.id).evidence
     # verificamos el tamaño de la imagen
-    try:
-        verify_image_size(image_data)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid image size")
+    if image_data:
+        try:
+            verify_image_size(image_data)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid image size")
 
     # Verificamos que el perro asociado a la visita exista
     adopted_dog = read_adopted_dogs_by_id(db, visit_update.adopted_dog_id)

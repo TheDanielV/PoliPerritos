@@ -25,6 +25,10 @@ class Dog(Base):
     is_vaccinated = Column(Boolean, unique=False, nullable=False)
     image = Column(LONGBLOB, nullable=True)
     gender = Column(SQLAEnum(Gender), default=False, nullable=False)
+    entry_date = Column(Date,nullable=True)
+    is_sterilized = Column(Boolean, unique=False, nullable=False)
+    is_dewormed = Column(Boolean, unique=False, nullable=False)
+    operation = Column(String(255), nullable=True)
 
 
 class StaticDog(Dog):
@@ -49,7 +53,11 @@ class AdoptionDog(Dog):
             gender=self.gender,
             adopted_date=date,
             owner=owner,
-            image=self.image
+            image=self.image,
+            entry_date=self.entry_date,
+            is_sterilized=self.is_sterilized,
+            is_dewormed=self.is_dewormed,
+            operation=self.operation
 
         )
         return adopted_dog
@@ -58,7 +66,7 @@ class AdoptionDog(Dog):
 class AdoptedDog(Dog):
     __tablename__ = "adopted_dogs"
 
-    adopted_date = Column(Date, index=True)
+    adopted_date = Column(Date, nullable=False)
     owner_id = Column(Integer, ForeignKey('owner.id'))
     owner = relationship("Owner", back_populates="adopted_dogs")  # Relacion con Dueño
     visits = relationship('Visit', back_populates='adopted_dog', cascade='all, delete-orphan')  # Relación con Visit
@@ -71,6 +79,10 @@ class AdoptedDog(Dog):
             age=self.age,
             gender=self.gender,
             is_vaccinated=self.is_vaccinated,
-            image=self.image
+            image=self.image,
+            entry_date=self.entry_date,
+            is_sterilized=self.is_sterilized,
+            is_dewormed=self.is_dewormed,
+            operation=self.operation
         )
         return adoption_dog

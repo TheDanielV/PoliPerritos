@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.models.domain.dog import *
 from app.models.schema.dog import *
 from app.crud.owner import read_owner_by_id
+from app.services.crypt import decrypt_str_data
 
 
 # Crud 4 Static Dogs
@@ -68,7 +69,11 @@ def create_static_dog(db: Session, static_dog: StaticDogCreate, image: bytes = N
         age=static_dog.age,
         is_vaccinated=static_dog.is_vaccinated,
         gender=static_dog.gender,
-        image=image
+        image=image,
+        entry_date=static_dog.entry_date,
+        is_sterilized=static_dog.is_sterilized,
+        is_dewormed=static_dog.is_dewormed,
+        operation=static_dog.operation
     )
     try:
         db.add(db_static_dog)
@@ -113,7 +118,11 @@ def update_static_dog(db: Session, static_dog: StaticDogCreate, image: bytes = N
         age=static_dog.age,
         is_vaccinated=static_dog.is_vaccinated,
         gender=static_dog.gender,
-        image=image
+        image=image,
+        entry_date=static_dog.entry_date,
+        is_sterilized=static_dog.is_sterilized,
+        is_dewormed=static_dog.is_dewormed,
+        operation=static_dog.operation
     )
     try:
         db.merge(db_static_dog_update)
@@ -179,7 +188,11 @@ def create_adoption_dog(db: Session, adoption_dog: AdoptionDogCreate, image: byt
         age=adoption_dog.age,
         is_vaccinated=adoption_dog.is_vaccinated,
         gender=adoption_dog.gender,
-        image=image
+        image=image,
+        entry_date=adoption_dog.entry_date,
+        is_sterilized=adoption_dog.is_sterilized,
+        is_dewormed=adoption_dog.is_dewormed,
+        operation=adoption_dog.operation
     )
     try:
         db.add(db_adoption_dog)
@@ -196,6 +209,9 @@ def create_adoption_dog(db: Session, adoption_dog: AdoptionDogCreate, image: byt
 def read_all_adoption_dogs(db: Session):
     """
     Devuelve una lista de todos los perros para adopcion en la base de datos.
+    :rtype: List[AdoptionDog]
+    :param db:
+    :return:
     """
     return db.query(AdoptionDog).all()
 
@@ -203,8 +219,37 @@ def read_all_adoption_dogs(db: Session):
 def read_adoption_dog_by_id(db: Session, dog_id: int):
     """
     Devuelve un perro de adopcion por su id.
+    :rtype: AdoptionDog
+    :param db:
+    :param dog_id:
+    :return:
     """
     return db.query(AdoptionDog).filter(AdoptionDog.id == dog_id).first()
+
+
+def update_adoption_dog(db: Session, static_dog: AdoptionDogCreate, image: bytes = None):
+    """
+    """
+    db_adoption_dog_update = AdoptionDog(
+        id=static_dog.id,
+        name=static_dog.name,
+        about=static_dog.about,
+        age=static_dog.age,
+        is_vaccinated=static_dog.is_vaccinated,
+        gender=static_dog.gender,
+        image=image,
+        entry_date=static_dog.entry_date,
+        is_sterilized=static_dog.is_sterilized,
+        is_dewormed=static_dog.is_dewormed,
+        operation=static_dog.operation
+    )
+    try:
+        db.merge(db_adoption_dog_update)
+        db.commit()
+        return {"detail": "Perro de Adopción Actualizado"}
+    except IntegrityError as ie:
+        db.rollback()
+        return None
 
 
 def delete_an_adoption_dog_by_id(db: Session, dog_id: int):
@@ -235,18 +280,33 @@ def adopt_dog(db: Session, adopted_dog: AdoptedDog):
         return None
 
 
+def create_adopted_dog_without_commit(db: Session, adopted_dog: AdoptedDog):
+    adoption_dog = read_adoption_dog_by_id(db, adopted_dog.id)
+    if adoption_dog:
+        db.add(adopted_dog)
+        db.delete(adoption_dog)
+    return adoption_dog
+
+
 def read_all_adopted_dogs(db: Session):
     """
     Devuelve una lista de todos los perros adoptados en la base de datos.
     """
-    return db.query(AdoptedDog).all()
+    dogs = db.query(AdoptedDog).all()
+    for dog in dogs:
+        dog.owner.direction = decrypt_str_data(dog.owner.direction)
+        dog.owner.cellphone = decrypt_str_data(dog.owner.cellphone)
+    return dogs
 
 
 def read_adopted_dogs_by_id(db: Session, dog_id: int):
     """
     Devuelve un perro adoptado por id.
     """
-    return db.query(AdoptedDog).filter(AdoptedDog.id == dog_id).first()
+    dog = db.query(AdoptedDog).filter(AdoptedDog.id == dog_id).first()
+    dog.owner.direction = decrypt_str_data(dog.owner.direction)
+    dog.owner.cellphone = decrypt_str_data(dog.owner.cellphone)
+    return dog
 
 
 def unadopt_dog(db: Session, adoption_dog: AdoptionDog, owner_id: int):

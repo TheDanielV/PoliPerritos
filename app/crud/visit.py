@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.models.domain.dog import AdoptedDog
 from app.models.domain.visit import Visit
 from app.models.schema.visit import VisitCreate, VisitResponse, VisitUpdate
+from app.services.crypt import decrypt_str_data
 
 
 def create_a_visit(db: Session, visit: VisitCreate, adopted_dog: AdoptedDog, evidence: bytes = None):
@@ -40,7 +41,11 @@ def get_all_visits(db: Session):
      ```
      ```
      """
-    return db.query(Visit).all()
+    visits_raw = db.query(Visit).all()
+    for visit in visits_raw:
+        visit.adopted_dog.owner.direction = decrypt_str_data(visit.adopted_dog.owner.direction)
+        visit.adopted_dog.owner.cellphone = decrypt_str_data(visit.adopted_dog.owner.cellphone)
+    return visits_raw
 
 
 def get_all_visits_by_dog(db: Session, dog_id: int):
@@ -56,14 +61,21 @@ def get_all_visits_by_dog(db: Session, dog_id: int):
      ```
      ```
      """
-    return db.query(Visit).filter(Visit.adopted_dog_id == dog_id).all()
+    visits_raw = db.query(Visit).filter(Visit.adopted_dog_id == dog_id).all()
+    for visit in visits_raw:
+        visit.adopted_dog.owner.direction = decrypt_str_data(visit.adopted_dog.owner.direction)
+        visit.adopted_dog.owner.cellphone = decrypt_str_data(visit.adopted_dog.owner.cellphone)
+    return visits_raw
 
 
 def read_visit_by_id(db: Session, visit_id: int):
     """
     Devuelve una visita por el id.
     """
-    return db.query(Visit).filter(Visit.id == visit_id).first()
+    visit = db.query(Visit).filter(Visit.id == visit_id).first()
+    visit.adopted_dog.owner.direction = decrypt_str_data(visit.adopted_dog.owner.direction)
+    visit.adopted_dog.owner.cellphone = decrypt_str_data(visit.adopted_dog.owner.cellphone)
+    return visit
 
 
 def update_visit(db: Session, visit_update: VisitUpdate, adopted_dog: AdoptedDog, evidence: bytes = None):

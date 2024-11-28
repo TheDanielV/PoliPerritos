@@ -32,5 +32,5 @@ class AuthToken(Base):
     def use_token(self):
         if self.value and self.user_id:
             self.is_used = True
-        if self.date_expiration > datetime.now() and self.value and self.user_id:
+        if self.date_expiration > datetime.utcnow() and self.value and self.user_id:
             self.is_used = True

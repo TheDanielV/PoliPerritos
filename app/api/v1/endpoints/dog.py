@@ -7,7 +7,7 @@ from datetime import date
 
 from app.crud.dog import read_all_static_dogs, read_static_dogs_by_id, create_static_dog, delete_an_static_dog_by_id, \
     read_all_adoption_dogs, read_adoption_dog_by_id, create_adoption_dog, adopt_dog, delete_an_adoption_dog_by_id, \
-    read_all_adopted_dogs, read_adopted_dogs_by_id, unadopt_dog, update_static_dog
+    read_all_adopted_dogs, read_adopted_dogs_by_id, unadopt_dog, update_static_dog, update_adoption_dog
 from app.db.session import get_db
 from app.core.security import get_current_user
 from app.models.schema.dog import StaticDogResponse, StaticDogCreate, AdoptionDogResponse, AdoptionDogCreate, \
@@ -16,6 +16,7 @@ from app.models.schema.owner import OwnerCreate, OwnerResponse
 from app.models.schema.user import TokenData
 from app.models.domain.user import Role
 from app.services.images_control_service import verify_image_size
+from app.services.password import create_owner_and_adopted_dog
 
 router = APIRouter()
 
@@ -67,10 +68,11 @@ async def create_new_static_dog(dog: StaticDogCreate,
         except (ValueError, TypeError):
             raise HTTPException(status_code=400, detail="Invalid image encoding")
         # verificamos el tamaño de la imagen
-    try:
-        verify_image_size(image_data)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid image size")
+    if image_data:
+        try:
+            verify_image_size(image_data)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid image size")
 
     # Crear el perro en la base de datos
     result = create_static_dog(db, dog, image_data)
@@ -99,7 +101,11 @@ def get_static_dogs(db: Session = Depends(get_db)):
             age=dog.age,
             is_vaccinated=dog.is_vaccinated,
             gender=dog.gender,
-            image=image_base64
+            image=image_base64,
+            entry_date=dog.entry_date,
+            is_sterilized=dog.is_sterilized,
+            is_dewormed=dog.is_dewormed,
+            operation=dog.operation
         )
         dog_list.append(dog_data)
     return dog_list
@@ -164,10 +170,11 @@ async def update_a_static_dog(dog: StaticDogCreate,
     else:
         image_data = read_static_dogs_by_id(db, dog.id).image
     # verificamos el tamaño de la imagen
-    try:
-        verify_image_size(image_data)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid image size")
+    if image_data:
+        try:
+            verify_image_size(image_data)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid image size")
     # Crear el perro en la base de datos
     result = update_static_dog(db, dog, image_data)
     if result is None:
@@ -237,10 +244,11 @@ def create_new_adoption_dog(dog: AdoptionDogCreate, db: Session = Depends(get_db
         except (ValueError, TypeError):
             raise HTTPException(status_code=400, detail="Invalid image encoding")
     # verificamos el tamaño de la imagen
-    try:
-        verify_image_size(image_data)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid image size")
+    if image_data:
+        try:
+            verify_image_size(image_data)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid image size")
 
     result = create_adoption_dog(db, dog, image_data)
     if result is None:
@@ -281,7 +289,7 @@ def adopt_dog_by_id(dog_id: int, adoption_date: date, owner: OwnerCreate, db: Se
     if adoption_dog is None:
         raise HTTPException(status_code=404, detail="No existe")
     adopted_dog = adoption_dog.adopt(adoption_date, owner)
-    result = adopt_dog(db, adopted_dog)
+    result = create_owner_and_adopted_dog(db, adopted_dog)
     return result
 
 
@@ -305,7 +313,11 @@ def get_adoption_dogs(db: Session = Depends(get_db)):
             age=dog.age,
             is_vaccinated=dog.is_vaccinated,
             gender=dog.gender,
-            image=image_base64
+            image=image_base64,
+            entry_date=dog.entry_date,
+            is_sterilized=dog.is_sterilized,
+            is_dewormed=dog.is_dewormed,
+            operation=dog.operation
         )
         adoption_dog_list.append(dog_data)
     return adoption_dog_list
@@ -321,6 +333,71 @@ def get_adoption_dogs_by_id(dog_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No se encontraron perros de adopcion")
     adoption_dog.image = base64.b64encode(adoption_dog.image).decode('utf-8') if adoption_dog.image else None
     return adoption_dog
+
+
+@router.put('/adoption_dog/update/', response_model=dict)
+async def update_an_adoption_dog(dog: AdoptionDogCreate,
+                                 db: Session = Depends(get_db),
+                                 current_user: TokenData = Depends(get_current_user)):
+    """
+    English:
+    --------
+    Update a static dog:
+
+    - **id** (required): id of the dog.
+    - **name** (required): Name of the dog.
+    - **about** (optional): Description of the dog.
+    - **age** (required): Age of the dog.
+    - **is_vaccinated** (required): Indicates if the dog is vaccinated. Must be a boolean:
+        - **true**: The dog is vaccinated.
+        - **false**: The dog is not vaccinated.
+    - **image** (optional): Base64 encrypted image of the dog.
+    - **gender** (required): Gender of the dog. Must be one of:
+        - **male**: Represents a male dog.
+        - **female**: Represents a female dog.
+
+    Español:
+    --------
+    Actualizar un perro estático:
+
+    - **id** (required): id del perro.
+    - **name** (required): Nombre del perro.
+    - **about** (optional): Descripción del perro.
+    - **age** (required): Edad del perro.
+    - **is_vaccinated** (required): Indica si el perro esta vacunado. Debe ser un boolean:
+        - **true**: El perro esta vacunado.
+        - **false**: El perro no esta vacunado.
+    - **image** (optional): Imagen del perro encriptad en base64.
+    - **gender** (required): Genero del perro. Debe ser uno de los siguientes:
+        - **male**: Representa un perro macho.
+        - **female**: Representa un perro hembra.
+        :param dog:
+        :param db:
+        :param current_user:
+        :return:
+    """
+    # TODO validar en caso de que se actualice también el id
+    if current_user.role.value not in [Role.ADMIN, Role.AUXILIAR]:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    if dog.image:
+        try:
+            image_data = base64.b64decode(dog.image)
+        except (ValueError, TypeError):
+            raise HTTPException(status_code=400, detail="Invalid image encoding")
+    else:
+        image_data = read_adoption_dog_by_id(db, dog.id).image
+    # verificamos el tamaño de la imagen
+    if image_data:
+        try:
+            verify_image_size(image_data)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid image size")
+    # Crear el perro en la base de datos
+    result = update_adoption_dog(db, dog, image_data)
+    if result is None:
+        raise HTTPException(status_code=409, detail="Error al actualizar el perro")
+    return result
 
 
 @router.delete('/adoption_dog/delete/{id_adoption_dog}', response_model=dict)
@@ -368,6 +445,10 @@ def get_adopted_dogs(db: Session = Depends(get_db)):
             is_vaccinated=dog.is_vaccinated,
             gender=dog.gender,
             image=image_base64,
+            entry_date=dog.entry_date,
+            is_sterilized=dog.is_sterilized,
+            is_dewormed=dog.is_dewormed,
+            operation=dog.operation,
             adopted_date=dog.adopted_date,
             owner=owner_data
         )

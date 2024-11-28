@@ -1,27 +1,29 @@
 import pytz
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Form
+from fastapi import APIRouter, BackgroundTasks, Form
 from pydantic import EmailStr
-from sqlalchemy.orm import Session
+
 from fastapi.security import OAuth2PasswordRequestForm
-from datetime import timedelta
 
-from starlette.requests import Request
-
-from app.crud.token import create_token
+from app.crud.token import create_token, verify_token
 from app.crud.user import get_user_id_by_email
 from app.models.domain.token import AuthToken
-from app.models.schema.user import UserCreate
-
 from app.core.security import *
 from app.models.schema.user import Token
 from app.db.session import get_db
+from app.services.crypt import verify_password
 from app.services.email_service import send_email
+from app.services.password import reset_password
+from app.services.verify import verify_password_, verify_email
 
 router = APIRouter()
 
 
 @router.post("/", response_model=dict)
 def create_new_auth_user(user: UserCreate, db: Session = Depends(get_db)):
+    if not verify_email(user.email):
+        raise HTTPException(status_code=400, detail="Correo inválido")
+    if not verify_password_(user.password):
+        raise HTTPException(status_code=400, detail="La contraseña debe contener almenos una letra y un numero")
     auth_user = create_auth_user(db, user)
     if auth_user is None:
         raise HTTPException(status_code=404, detail="Ocurrio un error")
@@ -79,10 +81,26 @@ async def send_reset_password_code(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post('/reset_password/verify')
+@router.post('/reset_password/verify', response_model=dict)
 async def verify_password_code(
-        background_tasks: BackgroundTasks,
         code: int,
         db: Session = Depends(get_db)
 ):
-    pass
+    is_verified, id_user = verify_token(db, code)
+    print(is_verified)
+    if is_verified and is_verified is not None:
+        return {'is_valid': True, 'message': 'Código valido'}
+    if not is_verified and is_verified is not None:
+        raise HTTPException(status_code=410, detail="Código expirado")
+    raise HTTPException(status_code=400, detail="Código invalido")
+
+
+@router.post('/reset_password/reset', response_model=dict)
+async def reset_passwor(
+        code: int,
+        new_password: str,
+        db: Session = Depends(get_db)
+):
+    if not verify_password_(new_password):
+        raise HTTPException(status_code=400, detail="La contraseña debe contener almenos una letra y un numero")
+    return reset_password(db, code, new_password)
