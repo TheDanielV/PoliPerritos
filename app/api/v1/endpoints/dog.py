@@ -1,20 +1,22 @@
 import base64
+import io
+from datetime import date
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
-from datetime import date
 
+from app.core.security import get_current_user
 from app.crud.dog import read_all_static_dogs, read_static_dogs_by_id, create_static_dog, delete_an_static_dog_by_id, \
-    read_all_adoption_dogs, read_adoption_dog_by_id, create_adoption_dog, adopt_dog, delete_an_adoption_dog_by_id, \
+    read_all_adoption_dogs, read_adoption_dog_by_id, create_adoption_dog, delete_an_adoption_dog_by_id, \
     read_all_adopted_dogs, read_adopted_dogs_by_id, unadopt_dog, update_static_dog, update_adoption_dog
 from app.db.session import get_db
-from app.core.security import get_current_user
+from app.models.domain.user import Role
 from app.models.schema.dog import StaticDogResponse, StaticDogCreate, AdoptionDogResponse, AdoptionDogCreate, \
     AdoptedDogResponse
 from app.models.schema.owner import OwnerCreate, OwnerResponse
 from app.models.schema.user import TokenData
-from app.models.domain.user import Role
 from app.services.images_control_service import verify_image_size
 from app.services.password import create_owner_and_adopted_dog
 
@@ -117,8 +119,18 @@ def get_static_dogs_by_id(dog_id: int, db: Session = Depends(get_db)):
 
     if not static_dog:
         raise HTTPException(status_code=404, detail="No se encontraron perros estáticos")
+    # noinspection PyTypeChecker
     static_dog.image = base64.b64encode(static_dog.image).decode('utf-8') if static_dog.image else None
     return static_dog
+
+
+@router.get("/static_dog/{dog_id}/imagen", response_class=StreamingResponse)
+async def get_imagen_perro_grande(dog_id: int, db: Session = Depends(get_db)):
+    static_dog = get_static_dogs_by_id(db, dog_id)
+    if not static_dog or not static_dog.image:
+        raise HTTPException(status_code=404, detail="Imagen no encontrada")
+
+    return StreamingResponse(io.BytesIO(static_dog.imagen), media_type="image/jpeg")
 
 
 @router.put('/static_dog/update/', response_model=dict)

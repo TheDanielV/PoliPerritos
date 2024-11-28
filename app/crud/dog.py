@@ -1,11 +1,10 @@
-# MecanicaMs/app/crud/dog.py
-from fastapi import HTTPException
+# Poliperritos/app/crud/dog.py
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
 from sqlalchemy.orm import Session
+
+from app.crud.owner import read_owner_by_id
 from app.models.domain.dog import *
 from app.models.schema.dog import *
-from app.crud.owner import read_owner_by_id
-from app.services.crypt import decrypt_str_data
 
 
 # Crud 4 Static Dogs
@@ -79,7 +78,7 @@ def create_static_dog(db: Session, static_dog: StaticDogCreate, image: bytes = N
         db.add(db_static_dog)
         db.commit()
         return {"detail": "Perro Permanente creado"}
-    except IntegrityError as ie:
+    except IntegrityError:
 
         db.rollback()
         return None
@@ -87,7 +86,7 @@ def create_static_dog(db: Session, static_dog: StaticDogCreate, image: bytes = N
 
 def read_all_static_dogs(db: Session):
     """
-     Devuelve una lista de perros estaticos existentes.
+     Devuelve una lista de perros estáticos existentes.
 
      Parameters:
      - db (Session): La sesión de base de datos de SQLAlchemy.
@@ -128,7 +127,7 @@ def update_static_dog(db: Session, static_dog: StaticDogCreate, image: bytes = N
         db.merge(db_static_dog_update)
         db.commit()
         return {"detail": "Perro Permanente Actualizado"}
-    except IntegrityError as ie:
+    except IntegrityError:
         db.rollback()
         return None
 
@@ -198,10 +197,10 @@ def create_adoption_dog(db: Session, adoption_dog: AdoptionDogCreate, image: byt
         db.add(db_adoption_dog)
         db.commit()
         return {"detail": "Perro de adopcion creado"}
-    except IntegrityError as e:
+    except IntegrityError:
         db.rollback()
         return None
-    except InvalidRequestError as e:
+    except InvalidRequestError:
         db.rollback()
         return None
 
@@ -247,7 +246,7 @@ def update_adoption_dog(db: Session, static_dog: AdoptionDogCreate, image: bytes
         db.merge(db_adoption_dog_update)
         db.commit()
         return {"detail": "Perro de Adopción Actualizado"}
-    except IntegrityError as ie:
+    except IntegrityError:
         db.rollback()
         return None
 
@@ -275,7 +274,7 @@ def adopt_dog(db: Session, adopted_dog: AdoptedDog):
         db.delete(adoption_dog)
         db.commit()
         return {"detail": "Perro Adoptado creado"}
-    except IntegrityError as ie:
+    except IntegrityError:
         db.rollback()
         return None
 
@@ -294,8 +293,7 @@ def read_all_adopted_dogs(db: Session):
     """
     dogs = db.query(AdoptedDog).all()
     for dog in dogs:
-        dog.owner.direction = decrypt_str_data(dog.owner.direction)
-        dog.owner.cellphone = decrypt_str_data(dog.owner.cellphone)
+        dog.owner.decrypt_data()
     return dogs
 
 
@@ -304,13 +302,13 @@ def read_adopted_dogs_by_id(db: Session, dog_id: int):
     Devuelve un perro adoptado por id.
     """
     dog = db.query(AdoptedDog).filter(AdoptedDog.id == dog_id).first()
-    dog.owner.direction = decrypt_str_data(dog.owner.direction)
-    dog.owner.cellphone = decrypt_str_data(dog.owner.cellphone)
+    dog.owner.decrypt_data()
     return dog
 
 
 def unadopt_dog(db: Session, adoption_dog: AdoptionDog, owner_id: int):
     owner = read_owner_by_id(db, owner_id)
+    owner.crypt_data()
     dog = db.query(AdoptedDog).filter(AdoptedDog.id == adoption_dog.id).first()
     try:
         db.add(adoption_dog)
@@ -319,6 +317,6 @@ def unadopt_dog(db: Session, adoption_dog: AdoptionDog, owner_id: int):
             db.delete(dog)
         db.commit()
         return {"detail": "Perro des adoptado"}
-    except IntegrityError as ie:
+    except IntegrityError:
         db.rollback()
         return None

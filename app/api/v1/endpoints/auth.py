@@ -8,7 +8,8 @@ from app.crud.token import create_token, verify_token
 from app.crud.user import get_user_id_by_email
 from app.models.domain.token import AuthToken
 from app.core.security import *
-from app.models.schema.user import Token
+from app.models.domain.user import Role
+from app.models.schema.user import Token, TokenData
 from app.db.session import get_db
 from app.services.crypt import verify_password
 from app.services.email_service import send_email
@@ -19,7 +20,11 @@ router = APIRouter()
 
 
 @router.post("/", response_model=dict)
-def create_new_auth_user(user: UserCreate, db: Session = Depends(get_db)):
+def create_new_auth_user(user: UserCreate,
+                         db: Session = Depends(get_db),
+                         current_user: TokenData = Depends(get_current_user)):
+    if current_user.role.value not in [Role.ADMIN]:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
     if not verify_email(user.email):
         raise HTTPException(status_code=400, detail="Correo inválido")
     if not verify_password_(user.password):

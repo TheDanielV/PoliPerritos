@@ -86,3 +86,5 @@ class AdoptedDog(Dog):
             operation=self.operation
         )
         return adoption_dog
+
+
