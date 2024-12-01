@@ -38,5 +38,5 @@ jobs:
 
       - name: Push Docker image
         run: |
-          docker tag gateway:latest ${{ secrets.DOCKER_HUB_USERNAME }}/poliperritos:latest
+          docker tag poliperritos:latest ${{ secrets.DOCKER_HUB_USERNAME }}/poliperritos:latest
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/poliperritos:latest
