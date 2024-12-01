@@ -29,7 +29,7 @@ class DogCreate(DogBase):
 
 class DogResponse(DogBase):
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # Schema for Static Dogs
@@ -45,7 +45,7 @@ class StaticDogResponse(StaticDogBase):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # Schema for Adoption Dogs
@@ -61,7 +61,7 @@ class AdoptionDogResponse(AdoptionDogBase):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # Schema for adopted dogs
@@ -91,4 +91,4 @@ class AdoptedDogResponse(BaseModel):
     owner: OwnerResponse
 
     class Config:
-        orm_mode = True
+        from_attributes = True

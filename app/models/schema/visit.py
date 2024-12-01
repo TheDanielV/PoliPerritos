@@ -22,7 +22,7 @@ class VisitResponse(VisitBase):
     adopted_dog: AdoptedDogResponse
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class VisitUpdate(VisitBase):

@@ -30,7 +30,7 @@ class UserResponse(UserBase):
     is_active: bool
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class UserUpdate(BaseModel):
@@ -38,4 +38,4 @@ class UserUpdate(BaseModel):
     email: Optional[str]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
