@@ -5,24 +5,57 @@ from pydantic import EmailStr
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.crud.token import create_token, verify_token
-from app.crud.user import get_user_id_by_email
+from app.crud.user import get_user_id_by_email, create_auth_user, update_auth_user_basic_information, \
+    update_auth_user_password, delete_auth_user
 from app.models.domain.token import AuthToken
 from app.core.security import *
 from app.models.domain.user import Role
-from app.models.schema.user import Token, TokenData
+from app.models.schema.user import Token, TokenData, UserUpdate, UserCreate
 from app.db.session import get_db
 from app.services.crypt import verify_password
 from app.services.email_service import send_email
-from app.services.password import reset_password
+from app.services.multi_crud_service import reset_password
 from app.services.verify import verify_password_, verify_email
 
 router = APIRouter()
+
+ALL_AUTH_ROLES = [Role.ADMIN, Role.AUXILIAR]
 
 
 @router.post("/", response_model=dict)
 def create_new_auth_user(user: UserCreate,
                          db: Session = Depends(get_db),
                          current_user: TokenData = Depends(get_current_user)):
+    """
+       English:
+       --------
+       Create a new User:
+
+       - **username** (required): Username to login.
+       - **password** (required): Password with:
+            - One Letter in UpperCase.
+            - One Number.
+            - 8 character length.
+            - One Special character.
+       - **email** (required): New email.
+       - **role** (required): Role of the user. Must be one of:
+            - **admin**: An admin user.
+            - **auxiliar**: Represents a female dogAn auxiliar user.
+       Español:
+       --------
+       Crear un nuevo usuario:
+
+       - **username** (required): Nombre de usuario para iniciar sesión.
+       - **password** (required): Contraseña con:
+            - Una letra en mayúscula.
+            - Un número.
+            - Longitud de 8 caracteres.
+            - Un caracter especial.
+       - **email** (required): Correo electrónico.
+       - **role** (required): Rol del usuario. Debe ser uno de los siguientes:
+            - **admin**: Usuario administrador.
+            - **auxiliar**: Usuario auxiliar.
+       """
     if current_user.role.value not in [Role.ADMIN]:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     if not verify_email(user.email):
@@ -30,15 +63,28 @@ def create_new_auth_user(user: UserCreate,
     if not verify_password_(user.password):
         raise HTTPException(status_code=400, detail="La contraseña debe contener almenos una letra y un numero")
     auth_user = create_auth_user(db, user)
-    if auth_user is None:
-        raise HTTPException(status_code=404, detail="Ocurrio un error")
     return auth_user
 
 
 @router.post("/token", response_model=Token)
-def login_for_access_token(
-        form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
-):
+def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(),
+                           db: Session = Depends(get_db)):
+    """
+       English:
+       --------
+       Login for Access Token:
+
+       - **username** (required): Username to login.
+       - **password** (required): Password of the user.
+
+       Español:
+       --------
+       Iniciar sesión para obtener un token de acceso:
+
+       - **username** (requerido): Nombre de usuario.
+       - **password** (requerido): Contraseña del usuario.
+
+       """
     user = get_user(db, username=form_data.username)
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
@@ -53,6 +99,61 @@ def login_for_access_token(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
+@router.put("/update", response_model=dict)
+def update_user_basic_information(user: UserUpdate,
+                                  db: Session = Depends(get_db),
+                                  current_user: TokenData = Depends(get_current_user)):
+    """
+       English:
+       --------
+       Update User:
+
+       - **username** (optional): New username.
+       - **email** (optional): New email.
+
+       Español:
+       --------
+       Actualizar usuario:
+
+       - **username** (optional): Nuevo nombre de usuario.
+       - **email** (optional): Nuevo email.
+       """
+    if current_user.role.value not in ALL_AUTH_ROLES:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    if user.email and not verify_email(user.email):
+        raise HTTPException(status_code=400, detail="Correo inválido")
+    user = update_auth_user_basic_information(db, user, current_user.username)
+    return user
+
+
+@router.put("/update/password", response_model=dict)
+def update_user_password(actual_password: str,
+                         new_password: str,
+                         db: Session = Depends(get_db),
+                         current_user: TokenData = Depends(get_current_user)):
+    """
+       English:
+       --------
+       Update password:
+
+       - **actual_password** (required): Actual user password.
+       - **new_password** (required): New user password.
+
+       Español:
+       --------
+       Actualizar contraseña:
+
+       - **actual_password** (required): Actual user password.
+       - **new_password** (required): New user password.
+       """
+    if current_user.role.value not in ALL_AUTH_ROLES:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    if not verify_password_(new_password):
+        raise HTTPException(status_code=400, detail="La contraseña debe contener almenos una letra y un numero")
+    user = update_auth_user_password(db, current_user.username, actual_password, new_password)
+    return user
+
+
 @router.post('/reset_password/send')
 async def send_reset_password_code(
         background_tasks: BackgroundTasks,
@@ -60,7 +161,17 @@ async def send_reset_password_code(
         db: Session = Depends(get_db)
 ):
     """
-    Endpoint para enviar un correo electrónico.
+       English:
+       --------
+       Send recovery password email:
+
+       - **email** (required): Email of a existing user.
+
+       Español:
+       --------
+        Enviar un correo electrónico para la recuperación de contraseña:
+
+       - **email** (required): Correo electrónico de un usuario existente.
     """
     subject = 'Recuperación de contraseña'
     try:
@@ -91,8 +202,20 @@ async def verify_password_code(
         code: int,
         db: Session = Depends(get_db)
 ):
+    """
+           English:
+           --------
+           Verify recovery password code:
+
+           - **code** (required): Code sent.
+
+           Español:
+           --------
+            Verificar código de recuperación de contraseña:
+
+           - **code** (required): Código enviado.
+    """
     is_verified, id_user = verify_token(db, code)
-    print(is_verified)
     if is_verified and is_verified is not None:
         return {'is_valid': True, 'message': 'Código valido'}
     if not is_verified and is_verified is not None:
@@ -101,11 +224,55 @@ async def verify_password_code(
 
 
 @router.post('/reset_password/reset', response_model=dict)
-async def reset_passwor(
+async def reset_forgotten_password(
         code: int,
         new_password: str,
-        db: Session = Depends(get_db)
-):
+        db: Session = Depends(get_db)):
+    """
+           English:
+           --------
+           Reset password with a verify code:
+
+           - **code** (required): Code sent.
+           - **password** (required): New password with:
+                - One Letter in UpperCase
+                - One Number
+                - 8 character length
+                - One Special character
+
+           Español:
+           --------
+            Resetear la contraseña con un código de recuperación:
+
+           - **code** (required): Código enviado.
+           - **new_password** (required): Nueva contraseña con:
+                - Una letra en mayúscula
+                - Un número
+                - Longitud de 8 caracteres
+                - Un caracter especial
+        """
     if not verify_password_(new_password):
         raise HTTPException(status_code=400, detail="La contraseña debe contener almenos una letra y un numero")
     return reset_password(db, code, new_password)
+
+
+@router.delete('/delete/{user_id}', response_model=dict)
+def delete_auth_user_by_id(user_id: int, db: Session = Depends(get_db),
+                           current_user: TokenData = Depends(get_current_user)):
+    """
+           English:
+           --------
+           Delete user by id:
+
+           - **user_id** (required): User id to be eliminated.
+
+           Español:
+           --------
+            Eliminar usuario por su id:
+
+           - **user_id** (required): Id de usuario a ser eliminado.
+    """
+    if current_user.role.value not in [Role.ADMIN]:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    auth_response = delete_auth_user(db, user_id, current_user.username)
+    return auth_response

@@ -1,8 +1,11 @@
 import base64
 import io
+import os
 from datetime import date
 from typing import List
 
+import dotenv
+from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
@@ -10,7 +13,7 @@ from sqlalchemy.orm import Session
 from app.core.security import get_current_user
 from app.crud.dog import read_all_static_dogs, read_static_dogs_by_id, create_static_dog, delete_an_static_dog_by_id, \
     read_all_adoption_dogs, read_adoption_dog_by_id, create_adoption_dog, delete_an_adoption_dog_by_id, \
-    read_all_adopted_dogs, read_adopted_dogs_by_id, unadopt_dog, update_static_dog, update_adoption_dog
+    read_all_adopted_dogs, read_adopted_dogs_by_id, update_static_dog, update_adoption_dog
 from app.db.session import get_db
 from app.models.domain.user import Role
 from app.models.schema.dog import StaticDogResponse, StaticDogCreate, AdoptionDogResponse, AdoptionDogCreate, \
@@ -18,9 +21,13 @@ from app.models.schema.dog import StaticDogResponse, StaticDogCreate, AdoptionDo
 from app.models.schema.owner import OwnerCreate, OwnerResponse
 from app.models.schema.user import TokenData
 from app.services.images_control_service import verify_image_size
-from app.services.password import create_owner_and_adopted_dog
+from app.services.multi_crud_service import create_owner_and_adopted_dog, un_adopt_dog_service
 
 router = APIRouter()
+
+load_dotenv()
+
+API_URL = os.getenv("API_URL")
 
 
 @router.post('/static_dog/create/', response_model=dict)
@@ -32,7 +39,7 @@ async def create_new_static_dog(dog: StaticDogCreate,
     --------
     Create a static dog:
 
-    - **id** (required): id of the dog.
+    - **id_chip** (optional): chip of the dog.
     - **name** (required): Name of the dog.
     - **about** (optional): Description of the dog.
     - **age** (required): Age of the dog.
@@ -43,12 +50,20 @@ async def create_new_static_dog(dog: StaticDogCreate,
     - **gender** (required): Gender of the dog. Must be one of:
         - **male**: Represents a male dog.
         - **female**: Represents a female dog.
+    - **entry_date** (required): Date of the entry in format YYYY-MM-DD.
+    - **is_sterilized** (required): Indicates if the dog is sterilized. Must be a boolean:
+        - **true**: The dog is sterilized.
+        - **false**: The dog is not sterilized
+    - **is_dewormed** (required): Indicates if the dog is dewormed. Must be a boolean:
+        - **true**: The dog is dewormed.
+        - **false**: The dog is not dewormed
+    - **operation** (optional): Specify the operation of the dog.
 
     Español:
     --------
     Crear un perro estático:
 
-    - **id** (required): id del perro.
+    - **id_chip** (optional): Chip del perro.
     - **name** (required): Nombre del perro.
     - **about** (optional): Descripción del perro.
     - **age** (required): Edad del perro.
@@ -59,6 +74,14 @@ async def create_new_static_dog(dog: StaticDogCreate,
     - **gender** (required): Genero del perro. Debe ser uno de los siguientes:
         - **male**: Representa un perro macho.
         - **female**: Representa un perro hembra.
+    - **entry_date** (required): Fecha de entrada en formato YYYY-MM-DD.
+    - **is_sterilized** (required): Indica si el perro esta esterilizado. Debe ser un boolean:
+        - **true**: El perro esta esterilizado.
+        - **false**: El perro no esta esterilizado.
+    - **is_dewormed** (required): Indica si el perro esta desparasitado. Debe ser un boolean:
+        - **true**: El perro esta desparasitado.
+        - **false**: El perro no esta desparasitado.
+    - **operation** (optional): Especifica la/las operaciones del perro.
     """
 
     if current_user.role.value not in [Role.ADMIN, Role.AUXILIAR]:
@@ -92,25 +115,10 @@ def get_static_dogs(db: Session = Depends(get_db)):
 
     if not static_dogs:
         raise HTTPException(status_code=404, detail="No se encontraron perros estáticos")
-    dog_list = []
     for dog in static_dogs:
-        # Codificar la imagen en Base64 si existe
-        image_base64 = base64.b64encode(dog.image).decode('utf-8') if dog.image else None
-        dog_data = StaticDogResponse(
-            id=dog.id,
-            name=dog.name,
-            about=dog.about,
-            age=dog.age,
-            is_vaccinated=dog.is_vaccinated,
-            gender=dog.gender,
-            image=image_base64,
-            entry_date=dog.entry_date,
-            is_sterilized=dog.is_sterilized,
-            is_dewormed=dog.is_dewormed,
-            operation=dog.operation
-        )
-        dog_list.append(dog_data)
-    return dog_list
+        if dog.image:
+            dog.image = f'{API_URL}/dog/static_dog/{dog.id}/image'
+    return static_dogs
 
 
 @router.get('/static_dog/{dog_id}', response_model=StaticDogResponse)
@@ -120,17 +128,18 @@ def get_static_dogs_by_id(dog_id: int, db: Session = Depends(get_db)):
     if not static_dog:
         raise HTTPException(status_code=404, detail="No se encontraron perros estáticos")
     # noinspection PyTypeChecker
-    static_dog.image = base64.b64encode(static_dog.image).decode('utf-8') if static_dog.image else None
+    if static_dog.image:
+        static_dog.image = f'{API_URL}/dog/static_dog/{static_dog.id}/image'
     return static_dog
 
 
-@router.get("/static_dog/{dog_id}/imagen", response_class=StreamingResponse)
-async def get_imagen_perro_grande(dog_id: int, db: Session = Depends(get_db)):
-    static_dog = get_static_dogs_by_id(db, dog_id)
+@router.get("/static_dog/{dog_id}/image", response_class=StreamingResponse)
+def get_static_dog_image(dog_id: int, db: Session = Depends(get_db)):
+    static_dog = read_static_dogs_by_id(db, dog_id)
     if not static_dog or not static_dog.image:
         raise HTTPException(status_code=404, detail="Imagen no encontrada")
 
-    return StreamingResponse(io.BytesIO(static_dog.imagen), media_type="image/jpeg")
+    return StreamingResponse(io.BytesIO(static_dog.image), media_type="image/jpeg")
 
 
 @router.put('/static_dog/update/', response_model=dict)
@@ -142,7 +151,7 @@ async def update_a_static_dog(dog: StaticDogCreate,
     --------
     Update a static dog:
 
-    - **id** (required): id of the dog.
+    - **id_chip** (optional): chip of the dog.
     - **name** (required): Name of the dog.
     - **about** (optional): Description of the dog.
     - **age** (required): Age of the dog.
@@ -153,12 +162,20 @@ async def update_a_static_dog(dog: StaticDogCreate,
     - **gender** (required): Gender of the dog. Must be one of:
         - **male**: Represents a male dog.
         - **female**: Represents a female dog.
+    - **entry_date** (required): Date of the entry in format YYYY-MM-DD.
+    - **is_sterilized** (required): Indicates if the dog is sterilized. Must be a boolean:
+        - **true**: The dog is sterilized.
+        - **false**: The dog is not sterilized
+    - **is_dewormed** (required): Indicates if the dog is dewormed. Must be a boolean:
+        - **true**: The dog is dewormed.
+        - **false**: The dog is not dewormed
+    - **operation** (optional): Specify the operation of the dog.
 
     Español:
     --------
     Actualizar un perro estático:
 
-    - **id** (required): id del perro.
+    - **id_chip** (optional): Chip del perro.
     - **name** (required): Nombre del perro.
     - **about** (optional): Descripción del perro.
     - **age** (required): Edad del perro.
@@ -169,6 +186,14 @@ async def update_a_static_dog(dog: StaticDogCreate,
     - **gender** (required): Genero del perro. Debe ser uno de los siguientes:
         - **male**: Representa un perro macho.
         - **female**: Representa un perro hembra.
+    - **entry_date** (required): Fecha de entrada en formato YYYY-MM-DD.
+    - **is_sterilized** (required): Indica si el perro esta esterilizado. Debe ser un boolean:
+        - **true**: El perro esta esterilizado.
+        - **false**: El perro no esta esterilizado.
+    - **is_dewormed** (required): Indica si el perro esta desparasitado. Debe ser un boolean:
+        - **true**: El perro esta desparasitado.
+        - **false**: El perro no esta desparasitado.
+    - **operation** (optional): Especifica la/las operaciones del perro.
     """
     # TODO validar en caso de que se actualice también el id
     if current_user.role.value not in [Role.ADMIN, Role.AUXILIAR]:
@@ -219,7 +244,7 @@ def create_new_adoption_dog(dog: AdoptionDogCreate, db: Session = Depends(get_db
     --------
     Create an adoption dog:
 
-    - **id** (required): id of the dog.
+    - **id_chip** (optional): chip of the dog.
     - **name** (required): Name of the dog.
     - **about** (optional): Description of the dog.
     - **age** (required): Age of the dog.
@@ -230,12 +255,20 @@ def create_new_adoption_dog(dog: AdoptionDogCreate, db: Session = Depends(get_db
     - **gender** (required): Gender of the dog. Must be one of:
         - **male**: Represents a male dog.
         - **female**: Represents a female dog.
+    - **entry_date** (required): Date of the entry in format YYYY-MM-DD.
+    - **is_sterilized** (required): Indicates if the dog is sterilized. Must be a boolean:
+        - **true**: The dog is sterilized.
+        - **false**: The dog is not sterilized
+    - **is_dewormed** (required): Indicates if the dog is dewormed. Must be a boolean:
+        - **true**: The dog is dewormed.
+        - **false**: The dog is not dewormed
+    - **operation** (optional): Specify the operation of the dog.
 
     Español:
     --------
     Crear un perro de adopción:
 
-    - **id** (required): id del perro.
+    - **id_chip** (optional): Chip del perro.
     - **name** (required): Nombre del perro.
     - **about** (optional): Descripción del perro.
     - **age** (required): Edad del perro.
@@ -246,6 +279,14 @@ def create_new_adoption_dog(dog: AdoptionDogCreate, db: Session = Depends(get_db
     - **gender** (required): Genero del perro. Debe ser uno de los siguientes:
         - **male**: Representa un perro macho.
         - **female**: Representa un perro hembra.
+    - **entry_date** (required): Fecha de entrada en formato YYYY-MM-DD.
+    - **is_sterilized** (required): Indica si el perro esta esterilizado. Debe ser un boolean:
+        - **true**: El perro esta esterilizado.
+        - **false**: El perro no esta esterilizado.
+    - **is_dewormed** (required): Indica si el perro esta desparasitado. Debe ser un boolean:
+        - **true**: El perro esta desparasitado.
+        - **false**: El perro no esta desparasitado.
+    - **operation** (optional): Especifica la/las operaciones del perro.
     """
     if current_user.role.value not in [Role.ADMIN, Role.AUXILIAR]:
         raise HTTPException(status_code=403, detail="Not enough permissions")
@@ -313,26 +354,13 @@ def get_adoption_dogs(db: Session = Depends(get_db)):
     adoption_dog = read_all_adoption_dogs(db)
     if not adoption_dog:
         raise HTTPException(status_code=404, detail="No se encontraron perros en adopcion")
-    adoption_dog_list = []
 
     for dog in adoption_dog:
-        # Codificar la imagen en Base64 si existe
-        image_base64 = base64.b64encode(dog.image).decode('utf-8') if dog.image else None
-        dog_data = AdoptionDogResponse(
-            id=dog.id,
-            name=dog.name,
-            about=dog.about,
-            age=dog.age,
-            is_vaccinated=dog.is_vaccinated,
-            gender=dog.gender,
-            image=image_base64,
-            entry_date=dog.entry_date,
-            is_sterilized=dog.is_sterilized,
-            is_dewormed=dog.is_dewormed,
-            operation=dog.operation
-        )
-        adoption_dog_list.append(dog_data)
-    return adoption_dog_list
+        if dog.image:
+            dog.image = f'{API_URL}/dog/adoption_dog/{dog.id}/image'
+        else:
+            dog.image = None
+    return adoption_dog
 
 
 @router.get('/adoption_dog/{dog_id}', response_model=StaticDogResponse)
@@ -343,8 +371,20 @@ def get_adoption_dogs_by_id(dog_id: int, db: Session = Depends(get_db)):
     adoption_dog = read_adoption_dog_by_id(db, dog_id)
     if not adoption_dog:
         raise HTTPException(status_code=404, detail="No se encontraron perros de adopcion")
-    adoption_dog.image = base64.b64encode(adoption_dog.image).decode('utf-8') if adoption_dog.image else None
+    if adoption_dog.image:
+        adoption_dog.image = f'{API_URL}/dog/adoption_dog/{adoption_dog.id}/image'
+    else:
+        adoption_dog.image = None
     return adoption_dog
+
+
+@router.get("/adoption_dog/{dog_id}/image", response_class=StreamingResponse)
+def get_adoption_dog_image(dog_id: int, db: Session = Depends(get_db)):
+    adoption_dog = read_adoption_dog_by_id(db, dog_id)
+    if not adoption_dog or not adoption_dog.image:
+        raise HTTPException(status_code=404, detail="Imagen no encontrada")
+
+    return StreamingResponse(io.BytesIO(adoption_dog.image), media_type="image/jpeg")
 
 
 @router.put('/adoption_dog/update/', response_model=dict)
@@ -354,9 +394,9 @@ async def update_an_adoption_dog(dog: AdoptionDogCreate,
     """
     English:
     --------
-    Update a static dog:
+    Update an adoption dog:
 
-    - **id** (required): id of the dog.
+    - **id_chip** (optional): chip of the dog.
     - **name** (required): Name of the dog.
     - **about** (optional): Description of the dog.
     - **age** (required): Age of the dog.
@@ -367,12 +407,19 @@ async def update_an_adoption_dog(dog: AdoptionDogCreate,
     - **gender** (required): Gender of the dog. Must be one of:
         - **male**: Represents a male dog.
         - **female**: Represents a female dog.
-
+    - **entry_date** (required): Date of the entry in format YYYY-MM-DD.
+    - **is_sterilized** (required): Indicates if the dog is sterilized. Must be a boolean:
+        - **true**: The dog is sterilized.
+        - **false**: The dog is not sterilized
+    - **is_dewormed** (required): Indicates if the dog is dewormed. Must be a boolean:
+        - **true**: The dog is dewormed.
+        - **false**: The dog is not dewormed
+    - **operation** (optional): Specify the operation of the dog.
     Español:
     --------
-    Actualizar un perro estático:
+    Actualizar un perro de adopción:
 
-    - **id** (required): id del perro.
+    - **id_chip** (optional): Chip del perro.
     - **name** (required): Nombre del perro.
     - **about** (optional): Descripción del perro.
     - **age** (required): Edad del perro.
@@ -383,10 +430,14 @@ async def update_an_adoption_dog(dog: AdoptionDogCreate,
     - **gender** (required): Genero del perro. Debe ser uno de los siguientes:
         - **male**: Representa un perro macho.
         - **female**: Representa un perro hembra.
-        :param dog:
-        :param db:
-        :param current_user:
-        :return:
+    - **entry_date** (required): Fecha de entrada en formato YYYY-MM-DD.
+    - **is_sterilized** (required): Indica si el perro esta esterilizado. Debe ser un boolean:
+        - **true**: El perro esta esterilizado.
+        - **false**: El perro no esta esterilizado.
+    - **is_dewormed** (required): Indica si el perro esta desparasitado. Debe ser un boolean:
+        - **true**: El perro esta desparasitado.
+        - **false**: El perro no esta desparasitado.
+    - **operation** (optional): Especifica la/las operaciones del perro.
     """
     # TODO validar en caso de que se actualice también el id
     if current_user.role.value not in [Role.ADMIN, Role.AUXILIAR]:
@@ -435,38 +486,11 @@ def get_adopted_dogs(db: Session = Depends(get_db)):
     adopted_dogs = read_all_adopted_dogs(db)
     if not adopted_dogs:
         raise HTTPException(status_code=404, detail="No se encontraron perros adoptados")
-
-    adopted_dogs_list = []
     for dog in adopted_dogs:
         # Codificar la imagen en Base64 si existe
-        image_base64 = base64.b64encode(dog.image).decode('utf-8') if dog.image else None
-
-        owner_data = OwnerResponse(
-            id=dog.owner.id,
-            name=dog.owner.name,
-            direction=dog.owner.direction,
-            cellphone=dog.owner.cellphone
-        )
-
-        # Crear el objeto de respuesta AdoptedDogResponse
-        dog_data = AdoptedDogResponse(
-            id=dog.id,
-            name=dog.name,
-            about=dog.about,
-            age=dog.age,
-            is_vaccinated=dog.is_vaccinated,
-            gender=dog.gender,
-            image=image_base64,
-            entry_date=dog.entry_date,
-            is_sterilized=dog.is_sterilized,
-            is_dewormed=dog.is_dewormed,
-            operation=dog.operation,
-            adopted_date=dog.adopted_date,
-            owner=owner_data
-        )
-        adopted_dogs_list.append(dog_data)
-
-    return adopted_dogs_list
+        if dog.image:
+            dog.image = f'{API_URL}/dog/adopted_dog/{dog.id}/image'
+    return adopted_dogs
 
 
 @router.get('/adopted_dog/{dog_id}', response_model=AdoptedDogResponse)
@@ -477,9 +501,18 @@ def get_adopted_dog_by_id(dog_id: int, db: Session = Depends(get_db)):
     adopted_dog = read_adopted_dogs_by_id(db, dog_id)
     if not adopted_dog:
         raise HTTPException(status_code=404, detail="No se encontraron perros adoptados")
-    print(adopted_dog.image)
-    adopted_dog.image = base64.b64encode(adopted_dog.image).decode('utf-8') if adopted_dog.image else None
+    if adopted_dog.image:
+        adopted_dog.image = f'{API_URL}/dog/adopted_dog/{adopted_dog.id}/image'
     return adopted_dog
+
+
+@router.get("/adopted_dog/{dog_id}/image", response_class=StreamingResponse)
+def get_adopted_dog_image(dog_id: int, db: Session = Depends(get_db)):
+    adopted_dog = read_adopted_dogs_by_id(db, dog_id)
+    if not adopted_dog or not adopted_dog.image:
+        raise HTTPException(status_code=404, detail="Imagen no encontrada")
+
+    return StreamingResponse(io.BytesIO(adopted_dog.image), media_type="image/jpeg")
 
 
 @router.post('/adopted_dog/unadopt/{dog_id}/', response_model=dict)
@@ -488,8 +521,5 @@ def unadopt_dog_by_id(dog_id: int, db: Session = Depends(get_db),
     if current_user.role.value not in [Role.ADMIN, Role.AUXILIAR]:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     adopted_dog = read_adopted_dogs_by_id(db, dog_id)
-    if adopted_dog is None:
-        raise HTTPException(status_code=404, detail="No existe")
-    adoption_dog = adopted_dog.unadopt()
-    result = unadopt_dog(db, adoption_dog, adopted_dog.owner.id)
+    result = un_adopt_dog_service(db, adopted_dog)
     return result

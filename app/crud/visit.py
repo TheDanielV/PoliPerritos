@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -70,7 +71,8 @@ def read_visit_by_id(db: Session, visit_id: int):
     Devuelve una visita por el id.
     """
     visit = db.query(Visit).filter(Visit.id == visit_id).first()
-    visit.adopted_dog.owner.decrypt_data()
+    if visit:
+        visit.adopted_dog.owner.decrypt_data()
     return visit
 
 
@@ -89,3 +91,32 @@ def update_visit(db: Session, visit_update: VisitUpdate, adopted_dog: AdoptedDog
     except IntegrityError:
         db.rollback()
         return None
+
+
+def delete_visit_by_id(db: Session, visit_id: int):
+    """
+    Deletes a user by their ID.
+
+    Args:
+        db (Session): Database session.
+        visit_id (int): ID of the visit to delete.
+
+    Raises:
+        HTTPException: Raised with appropriate status codes and messages.
+    """
+    visit = db.query(Visit).filter(Visit.id == visit_id).first()
+
+    if visit is None:
+        raise HTTPException(
+            status_code=404, detail="Visita no encontrada."
+        )
+    else:
+        try:
+            db.delete(visit)
+            db.commit()
+            return {"success": True, "message": "Visita eliminada"}
+        except IntegrityError as ie:
+            db.rollback()
+            raise HTTPException(
+                status_code=500, detail=ie
+            )

@@ -1,19 +1,15 @@
-# app/security.py
+# app/core/security.py
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
 from app.db.session import get_db
 from app.models.domain.user import User
-from app.models.schema.user import UserCreate
 from typing import Optional
 
-from app.services.crypt import get_password_hash
-
 # Configuración del token
-SECRET_KEY = "your-secret-key"  # Cambia esto a un valor seguro
+SECRET_KEY = "your-secret-key"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -33,7 +29,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
 
 # Obtener el usuario desde la base de datos
-def get_user(db: Session, username: str):
+def get_user(db: Session, username: str) -> User:
     return db.query(User).filter(User.username == username).first()
 
 
@@ -63,19 +59,3 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     return user
 
 
-def create_auth_user(db: Session, user: UserCreate):
-    db_auth_user = User(
-        username=user.username,
-        hashed_password=get_password_hash(user.password),
-        email=user.email,
-        role=user.role,
-        is_active=False
-    )
-    try:
-        db.add(db_auth_user)
-        db.commit()
-        db.refresh(db_auth_user)
-        return {"detail": "Usuario creado"}
-    except IntegrityError as ie:
-        db.rollback()
-        return None

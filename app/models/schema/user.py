@@ -1,4 +1,6 @@
 # app/models/schema/user.py
+from typing import Optional
+
 from pydantic import BaseModel
 from app.models.domain.user import Role
 
@@ -26,6 +28,14 @@ class UserResponse(UserBase):
     id: int
     role: Role
     is_active: bool
+
+    class Config:
+        orm_mode = True
+
+
+class UserUpdate(BaseModel):
+    username: Optional[str]
+    email: Optional[str]
 
     class Config:
         orm_mode = True

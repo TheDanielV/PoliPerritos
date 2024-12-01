@@ -1,11 +1,16 @@
 import base64
+import io
+import os
 from typing import List
 
+from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.crud.dog import read_adopted_dogs_by_id
-from app.crud.visit import create_a_visit, get_all_visits, get_all_visits_by_dog, read_visit_by_id, update_visit
+from app.crud.visit import create_a_visit, get_all_visits, get_all_visits_by_dog, read_visit_by_id, update_visit, \
+    delete_visit_by_id
 from app.db.session import get_db
 from app.core.security import get_current_user
 from app.models.schema.user import TokenData
@@ -15,6 +20,10 @@ from app.models.domain.user import Role
 from app.services.images_control_service import verify_image_size
 
 router = APIRouter()
+
+load_dotenv()
+
+API_URL = os.getenv("API_URL")
 
 
 @router.post('/create/', response_model=dict)
@@ -86,15 +95,11 @@ async def get_visits(db: Session = Depends(get_db),
         raise HTTPException(status_code=404, detail="No hay visitas")
     visits = []
     for visit in visits_raw:
-        if isinstance(visit.adopted_dog.image, bytes):
-            data = base64.b64encode(visit.adopted_dog.image).decode('utf-8') if visit.evidence else None
-        else:
-            data = visit.adopted_dog.image
-        evidence_base64 = base64.b64encode(visit.evidence).decode('utf-8') if visit.evidence else None
+        if visit.adopted_dog.image:
+            visit.adopted_dog.image = f'{API_URL}/dog/adopted_dog/{visit.adopted_dog.id}/image'
 
-        visit.adopted_dog.image = f'{data}'
-        visit.evidence = evidence_base64
-
+        if visit.evidence:
+            visit.evidence = f'{API_URL}/visits/{visit.id}/evidence'
         visits.append(visit)
 
     return visits
@@ -121,14 +126,11 @@ async def get_visits_by_dog_id(dog_id: int, db: Session = Depends(get_db),
         raise HTTPException(status_code=404, detail="No hay visitas")
     visits = []
     for visit in visits_raw:
-        if isinstance(visit.adopted_dog.image, bytes):
-            data = base64.b64encode(visit.adopted_dog.image).decode('utf-8') if visit.evidence else None
-        else:
-            data = visit.adopted_dog.image
-        evidence_base64 = base64.b64encode(visit.evidence).decode('utf-8') if visit.evidence else None
+        if visit.adopted_dog.image:
+            visit.adopted_dog.image = f'{API_URL}/dog/adopted_dog/{visit.adopted_dog.id}/image'
 
-        visit.adopted_dog.image = f'{data}'
-        visit.evidence = evidence_base64
+        if visit.evidence:
+            visit.evidence = f'{API_URL}/visits/{visit.id}/evidence'
 
         visits.append(visit)
 
@@ -154,14 +156,25 @@ async def get_visit_by_id(visit_id: int, db: Session = Depends(get_db),
     if not visit:
         raise HTTPException(status_code=404, detail="No hay visitas")
 
-    image_base64 = base64.b64encode(visit.adopted_dog.image).decode('utf-8') if visit.adopted_dog.image else None
+    if visit.adopted_dog.image:
+        visit.adopted_dog.image = f'{API_URL}/dog/adopted_dog/{visit.adopted_dog.id}/image'
 
-    evidence_base64 = base64.b64encode(visit.evidence).decode('utf-8') if visit.evidence else None
-
-    visit.adopted_dog.image = image_base64
-    visit.evidence = evidence_base64
+    if visit.evidence:
+        visit.evidence = f'{API_URL}/visits/{visit.id}/evidence'
 
     return visit
+
+
+@router.get("/{visit_id}/evidence", response_class=StreamingResponse)
+def get_visit_evidence(visit_id: int, db: Session = Depends(get_db),
+                       current_user: TokenData = Depends(get_current_user)):
+    if current_user.role.value not in [Role.ADMIN, Role.AUXILIAR]:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    visit = read_visit_by_id(db, visit_id)
+    if not visit or not visit.evidence:
+        raise HTTPException(status_code=404, detail="Imagen no encontrada")
+
+    return StreamingResponse(io.BytesIO(visit.evidence), media_type="image/jpeg")
 
 
 @router.put('/update/', response_model=dict)
@@ -215,3 +228,25 @@ async def update_visit_by_id(visit_update: VisitUpdate, db: Session = Depends(ge
     if result is None:
         raise HTTPException(status_code=409, detail="Hubo un problema al actualizar")
     return result
+
+
+@router.delete('/delete/{id_visit}', response_model=dict)
+def delete_a_visit_by_id(id_visit: int, db: Session = Depends(get_db),
+                         current_user: TokenData = Depends(get_current_user)):
+    """
+    English:
+    --------
+    Delete a visit:
+
+    - **id_visit** (required): Id of the visit.
+
+    Español:
+    --------
+    Borrar una visita:
+
+    - **id_visit** (required): ID de la visita.
+    """
+    if current_user.role.value not in [Role.ADMIN]:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    dog_response = delete_visit_by_id(db, id_visit)
+    return dog_response

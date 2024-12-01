@@ -62,7 +62,7 @@ def create_static_dog(db: Session, static_dog: StaticDogCreate, image: bytes = N
        """
 
     db_static_dog = StaticDog(
-        id=static_dog.id,
+        id_chip=static_dog.id_chip,
         name=static_dog.name,
         about=static_dog.about,
         age=static_dog.age,
@@ -100,7 +100,7 @@ def read_all_static_dogs(db: Session):
     return db.query(StaticDog).all()
 
 
-def read_static_dogs_by_id(db: Session, dog_id: int):
+def read_static_dogs_by_id(db: Session, dog_id: int) -> StaticDog:
     """
     Devuelve un perro estatico por su id.
     """
@@ -297,22 +297,22 @@ def read_all_adopted_dogs(db: Session):
     return dogs
 
 
-def read_adopted_dogs_by_id(db: Session, dog_id: int):
+def read_adopted_dogs_by_id(db: Session, dog_id: int) -> AdoptedDog:
     """
     Devuelve un perro adoptado por id.
     """
     dog = db.query(AdoptedDog).filter(AdoptedDog.id == dog_id).first()
-    dog.owner.decrypt_data()
+
+    if dog:
+        dog.owner.decrypt_data()
     return dog
 
 
-def unadopt_dog(db: Session, adoption_dog: AdoptionDog, owner_id: int):
-    owner = read_owner_by_id(db, owner_id)
-    owner.crypt_data()
+def unadopt_dog(db: Session, adoption_dog: AdoptionDog):
+
     dog = db.query(AdoptedDog).filter(AdoptedDog.id == adoption_dog.id).first()
     try:
         db.add(adoption_dog)
-        db.delete(owner)
         if dog is not None:
             db.delete(dog)
         db.commit()

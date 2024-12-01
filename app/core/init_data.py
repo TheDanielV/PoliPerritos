@@ -1,6 +1,6 @@
 from sqlalchemy.exc import IntegrityError
 from app.core.config import settings
-from app.core.security import create_auth_user
+from app.crud.user import create_auth_user
 from app.db.database import SessionLocal
 from app.models.domain.user import Role, User
 from app.models.schema.user import UserCreate

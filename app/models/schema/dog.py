@@ -10,7 +10,7 @@ from app.models.domain.dog import Gender
 
 # Schema for Abstract Dog
 class DogBase(BaseModel):
-    id: int
+    id_chip: Optional[int]
     name: str
     about: Optional[str]
     age: int
@@ -42,6 +42,8 @@ class StaticDogCreate(StaticDogBase):
 
 
 class StaticDogResponse(StaticDogBase):
+    id: int
+
     class Config:
         orm_mode = True
 
@@ -56,6 +58,8 @@ class AdoptionDogCreate(AdoptionDogBase):
 
 
 class AdoptionDogResponse(AdoptionDogBase):
+    id: int
+
     class Config:
         orm_mode = True
 
@@ -72,6 +76,7 @@ class AdoptedDogCreate(AdoptedDogBase):
 
 class AdoptedDogResponse(BaseModel):
     id: int
+    id_chip: int
     name: str
     about: Optional[str]
     age: int
@@ -87,5 +92,3 @@ class AdoptedDogResponse(BaseModel):
 
     class Config:
         orm_mode = True
-
-
