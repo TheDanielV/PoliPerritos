@@ -23,12 +23,12 @@ def render_template(template_name: str, context: dict) -> str:
     return template.render(context)
 
 
-def send_email(recipient: str, subject: str, context: dict):
+def send_email(recipient: str, subject: str, context: dict, template: str):
     """
     Envía un correo electrónico con una plantilla HTML.
     """
     # Renderizar la plantilla
-    html_content = render_template("email.html", context)
+    html_content = render_template(template, context)
 
     # Configurar el mensaje
     message = MIMEMultipart("alternative")

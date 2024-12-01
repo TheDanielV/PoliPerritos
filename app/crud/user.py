@@ -38,6 +38,30 @@ def create_auth_user(db: Session, user: UserCreate):
         )
 
 
+def auto_create_auth_user(db: Session, user: User):
+    try:
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return {"detail": "Usuario creado"}
+    except IntegrityError as ie:
+        db.rollback()
+        error_message = str(ie.orig)
+
+        if "Duplicate entry" in error_message:
+            if "username" in error_message:
+                raise HTTPException(
+                    status_code=400, detail="El username ya está en uso."
+                )
+            elif "email" in error_message:
+                raise HTTPException(
+                    status_code=400, detail="El email ya está en uso."
+                )
+        raise HTTPException(
+            status_code=500, detail="Error al actualizar el usuario. Por favor, inténtelo nuevamente."
+        )
+
+
 def get_user_id_by_email(db: Session, user_email: str):
     """
     Devuelve el id de un usuario con base en su email.

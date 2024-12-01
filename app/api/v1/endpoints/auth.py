@@ -6,7 +6,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from app.crud.token import create_token, verify_token
 from app.crud.user import get_user_id_by_email, create_auth_user, update_auth_user_basic_information, \
-    update_auth_user_password, delete_auth_user
+    update_auth_user_password, delete_auth_user, auto_create_auth_user
 from app.models.domain.token import AuthToken
 from app.core.security import *
 from app.models.domain.user import Role
@@ -14,6 +14,7 @@ from app.models.schema.user import Token, TokenData, UserUpdate, UserCreate
 from app.db.session import get_db
 from app.services.crypt import verify_password
 from app.services.email_service import send_email
+from app.services.generator import user_generator
 from app.services.multi_crud_service import reset_password
 from app.services.verify import verify_password_, verify_email
 
@@ -64,6 +65,43 @@ def create_new_auth_user(user: UserCreate,
         raise HTTPException(status_code=400, detail="La contraseña debe contener almenos una letra y un numero")
     auth_user = create_auth_user(db, user)
     return auth_user
+
+
+@router.post("/generate_user", response_model=dict)
+def generate_new_auth_user(background_tasks: BackgroundTasks,
+                           email: str,
+                           role: Role,
+                           db: Session = Depends(get_db),
+                           current_user: TokenData = Depends(get_current_user)):
+    """
+       English:
+       --------
+       Generate a new User:
+
+       - **email** (required): New email.
+       - **role** (required): Role of the user. Must be one of:
+            - **admin**: An admin user.
+            - **auxiliar**: Represents a female dogAn auxiliar user.
+       Español:
+       --------
+       Generar un nuevo usuario:
+
+       - **email** (required): Correo electrónico.
+       - **role** (required): Rol del usuario. Debe ser uno de los siguientes:
+            - **admin**: Usuario administrador.
+            - **auxiliar**: Usuario auxiliar.
+       """
+    if current_user.role.value not in [Role.ADMIN]:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    if not verify_email(email):
+        raise HTTPException(status_code=400, detail="Correo inválido")
+    user, data_for_email = user_generator(email, role)
+    auth_user = auto_create_auth_user(db, user)
+    if not isinstance(auth_user, HTTPException):
+        background_tasks.add_task(send_email, email, "Credenciales de acceso", data_for_email, "user.html")
+        return auth_user
+    else:
+        return auth_user
 
 
 @router.post("/token", response_model=Token)
@@ -191,7 +229,7 @@ async def send_reset_password_code(
                         .strftime("%Y-%m-%d %H:%M:%S")
                     }
                 }
-                background_tasks.add_task(send_email, email, subject, context)
+                background_tasks.add_task(send_email, email, subject, context, "email.html")
         return {"message": "Si el correo existe, el código sera enviado"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
