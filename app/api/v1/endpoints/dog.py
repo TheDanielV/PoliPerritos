@@ -50,7 +50,7 @@ async def create_new_static_dog(dog: StaticDogCreate,
     - **gender** (required): Gender of the dog. Must be one of:
         - **male**: Represents a male dog.
         - **female**: Represents a female dog.
-    - **entry_date** (required): Date of the entry in format YYYY-MM-DD.
+    - **entry_date** (optional): Date of the entry in format YYYY-MM-DD.
     - **is_sterilized** (required): Indicates if the dog is sterilized. Must be a boolean:
         - **true**: The dog is sterilized.
         - **false**: The dog is not sterilized
@@ -74,7 +74,7 @@ async def create_new_static_dog(dog: StaticDogCreate,
     - **gender** (required): Genero del perro. Debe ser uno de los siguientes:
         - **male**: Representa un perro macho.
         - **female**: Representa un perro hembra.
-    - **entry_date** (required): Fecha de entrada en formato YYYY-MM-DD.
+    - **entry_date** (optional): Fecha de entrada en formato YYYY-MM-DD.
     - **is_sterilized** (required): Indica si el perro esta esterilizado. Debe ser un boolean:
         - **true**: El perro esta esterilizado.
         - **false**: El perro no esta esterilizado.
@@ -162,7 +162,7 @@ async def update_a_static_dog(dog: StaticDogCreate,
     - **gender** (required): Gender of the dog. Must be one of:
         - **male**: Represents a male dog.
         - **female**: Represents a female dog.
-    - **entry_date** (required): Date of the entry in format YYYY-MM-DD.
+    - **entry_date** (optional): Date of the entry in format YYYY-MM-DD.
     - **is_sterilized** (required): Indicates if the dog is sterilized. Must be a boolean:
         - **true**: The dog is sterilized.
         - **false**: The dog is not sterilized
@@ -186,7 +186,7 @@ async def update_a_static_dog(dog: StaticDogCreate,
     - **gender** (required): Genero del perro. Debe ser uno de los siguientes:
         - **male**: Representa un perro macho.
         - **female**: Representa un perro hembra.
-    - **entry_date** (required): Fecha de entrada en formato YYYY-MM-DD.
+    - **entry_date** (optional): Fecha de entrada en formato YYYY-MM-DD.
     - **is_sterilized** (required): Indica si el perro esta esterilizado. Debe ser un boolean:
         - **true**: El perro esta esterilizado.
         - **false**: El perro no esta esterilizado.
@@ -255,7 +255,7 @@ def create_new_adoption_dog(dog: AdoptionDogCreate, db: Session = Depends(get_db
     - **gender** (required): Gender of the dog. Must be one of:
         - **male**: Represents a male dog.
         - **female**: Represents a female dog.
-    - **entry_date** (required): Date of the entry in format YYYY-MM-DD.
+    - **entry_date** (optional): Date of the entry in format YYYY-MM-DD.
     - **is_sterilized** (required): Indicates if the dog is sterilized. Must be a boolean:
         - **true**: The dog is sterilized.
         - **false**: The dog is not sterilized
@@ -279,7 +279,7 @@ def create_new_adoption_dog(dog: AdoptionDogCreate, db: Session = Depends(get_db
     - **gender** (required): Genero del perro. Debe ser uno de los siguientes:
         - **male**: Representa un perro macho.
         - **female**: Representa un perro hembra.
-    - **entry_date** (required): Fecha de entrada en formato YYYY-MM-DD.
+    - **entry_date** (optional): Fecha de entrada en formato YYYY-MM-DD.
     - **is_sterilized** (required): Indica si el perro esta esterilizado. Debe ser un boolean:
         - **true**: El perro esta esterilizado.
         - **false**: El perro no esta esterilizado.
@@ -407,7 +407,7 @@ async def update_an_adoption_dog(dog: AdoptionDogCreate,
     - **gender** (required): Gender of the dog. Must be one of:
         - **male**: Represents a male dog.
         - **female**: Represents a female dog.
-    - **entry_date** (required): Date of the entry in format YYYY-MM-DD.
+    - **entry_date** (optional): Date of the entry in format YYYY-MM-DD.
     - **is_sterilized** (required): Indicates if the dog is sterilized. Must be a boolean:
         - **true**: The dog is sterilized.
         - **false**: The dog is not sterilized
@@ -430,7 +430,7 @@ async def update_an_adoption_dog(dog: AdoptionDogCreate,
     - **gender** (required): Genero del perro. Debe ser uno de los siguientes:
         - **male**: Representa un perro macho.
         - **female**: Representa un perro hembra.
-    - **entry_date** (required): Fecha de entrada en formato YYYY-MM-DD.
+    - **entry_date** (optional): Fecha de entrada en formato YYYY-MM-DD.
     - **is_sterilized** (required): Indica si el perro esta esterilizado. Debe ser un boolean:
         - **true**: El perro esta esterilizado.
         - **false**: El perro no esta esterilizado.

@@ -41,7 +41,7 @@ def create_new_auth_user(user: UserCreate,
        - **email** (required): New email.
        - **role** (required): Role of the user. Must be one of:
             - **admin**: An admin user.
-            - **auxiliar**: Represents a female dogAn auxiliar user.
+            - **auxiliar**: An auxiliar user.
        Español:
        --------
        Crear un nuevo usuario:
@@ -81,7 +81,8 @@ def generate_new_auth_user(background_tasks: BackgroundTasks,
        - **email** (required): New email.
        - **role** (required): Role of the user. Must be one of:
             - **admin**: An admin user.
-            - **auxiliar**: Represents a female dogAn auxiliar user.
+            - **auxiliar**: An auxiliar user.
+
        Español:
        --------
        Generar un nuevo usuario:
@@ -132,7 +133,7 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(),
         )
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
+        data={"sub": user.username, "role": user.role}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
