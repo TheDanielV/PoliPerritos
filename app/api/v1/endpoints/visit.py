@@ -66,9 +66,9 @@ async def create_new_visit(visit: VisitCreate,
 
     # Obtenemos el perro
     adopted_dog = read_adopted_dogs_by_id(db, visit.adopted_dog_id)
-    adopted_dog.owner.crypt_data()
     if not adopted_dog:
         raise HTTPException(status_code=404, detail=f'No se encontro al perro con id: {visit.adopted_dog_id}')
+    adopted_dog.owner.crypt_data()
     result = create_a_visit(db, visit, adopted_dog, image_data)
     if result is None:
         raise HTTPException(status_code=409, detail="La visita que desea registrar ya existe")

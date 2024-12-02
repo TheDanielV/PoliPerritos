@@ -142,8 +142,9 @@ def get_static_dog_image(dog_id: int, db: Session = Depends(get_db)):
     return StreamingResponse(io.BytesIO(static_dog.image), media_type="image/jpeg")
 
 
-@router.put('/static_dog/update/', response_model=dict)
-async def update_a_static_dog(dog: StaticDogCreate,
+@router.put('/static_dog/update/{id_dog}', response_model=dict)
+async def update_a_static_dog(id_dog: int,
+                              dog: StaticDogCreate,
                               db: Session = Depends(get_db),
                               current_user: TokenData = Depends(get_current_user)):
     """
@@ -205,7 +206,7 @@ async def update_a_static_dog(dog: StaticDogCreate,
         except (ValueError, TypeError):
             raise HTTPException(status_code=400, detail="Invalid image encoding")
     else:
-        image_data = read_static_dogs_by_id(db, dog.id).image
+        image_data = read_static_dogs_by_id(db, id_dog).image
     # verificamos el tamaño de la imagen
     if image_data:
         try:
@@ -213,7 +214,7 @@ async def update_a_static_dog(dog: StaticDogCreate,
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid image size")
     # Crear el perro en la base de datos
-    result = update_static_dog(db, dog, image_data)
+    result = update_static_dog(db, dog, id_dog, image_data)
     if result is None:
         raise HTTPException(status_code=409, detail="Error al actualizar el perro")
     return result
@@ -387,8 +388,9 @@ def get_adoption_dog_image(dog_id: int, db: Session = Depends(get_db)):
     return StreamingResponse(io.BytesIO(adoption_dog.image), media_type="image/jpeg")
 
 
-@router.put('/adoption_dog/update/', response_model=dict)
-async def update_an_adoption_dog(dog: AdoptionDogCreate,
+@router.put('/adoption_dog/update/{id_dog}', response_model=dict)
+async def update_an_adoption_dog(id_dog: int,
+                                 dog: AdoptionDogCreate,
                                  db: Session = Depends(get_db),
                                  current_user: TokenData = Depends(get_current_user)):
     """
@@ -449,7 +451,7 @@ async def update_an_adoption_dog(dog: AdoptionDogCreate,
         except (ValueError, TypeError):
             raise HTTPException(status_code=400, detail="Invalid image encoding")
     else:
-        image_data = read_adoption_dog_by_id(db, dog.id).image
+        image_data = read_adoption_dog_by_id(db, id_dog).image
     # verificamos el tamaño de la imagen
     if image_data:
         try:
@@ -457,7 +459,7 @@ async def update_an_adoption_dog(dog: AdoptionDogCreate,
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid image size")
     # Crear el perro en la base de datos
-    result = update_adoption_dog(db, dog, image_data)
+    result = update_adoption_dog(db, dog, id_dog, image_data)
     if result is None:
         raise HTTPException(status_code=409, detail="Error al actualizar el perro")
     return result

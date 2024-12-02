@@ -47,6 +47,7 @@ class AdoptionDog(Dog):
         )
         adopted_dog = AdoptedDog(
             id=self.id,
+            id_chip=self.id_chip,
             name=self.name,
             about=self.about,
             age=self.age,
@@ -75,6 +76,7 @@ class AdoptedDog(Dog):
     def unadopt(self):
         adoption_dog = AdoptionDog(
             id=self.id,
+            id_chip=self.id_chip,
             name=self.name,
             about=self.about,
             age=self.age,

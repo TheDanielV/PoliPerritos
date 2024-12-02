@@ -107,11 +107,12 @@ def read_static_dogs_by_id(db: Session, dog_id: int) -> StaticDog:
     return db.query(StaticDog).filter(StaticDog.id == dog_id).first()
 
 
-def update_static_dog(db: Session, static_dog: StaticDogCreate, image: bytes = None):
+def update_static_dog(db: Session, static_dog: StaticDogCreate, id_dog: int, image: bytes = None):
     """
     """
     db_static_dog_update = StaticDog(
-        id=static_dog.id,
+        id=id_dog,
+        id_chip=static_dog.id_chip,
         name=static_dog.name,
         about=static_dog.about,
         age=static_dog.age,
@@ -181,7 +182,7 @@ def create_adoption_dog(db: Session, adoption_dog: AdoptionDogCreate, image: byt
      ```
      """
     db_adoption_dog = AdoptionDog(
-        id=adoption_dog.id,
+        id_chip=adoption_dog.id_chip,
         name=adoption_dog.name,
         about=adoption_dog.about,
         age=adoption_dog.age,
@@ -226,21 +227,22 @@ def read_adoption_dog_by_id(db: Session, dog_id: int):
     return db.query(AdoptionDog).filter(AdoptionDog.id == dog_id).first()
 
 
-def update_adoption_dog(db: Session, static_dog: AdoptionDogCreate, image: bytes = None):
+def update_adoption_dog(db: Session, adoption_dog: AdoptionDogCreate, id_dog: int, image: bytes = None):
     """
     """
     db_adoption_dog_update = AdoptionDog(
-        id=static_dog.id,
-        name=static_dog.name,
-        about=static_dog.about,
-        age=static_dog.age,
-        is_vaccinated=static_dog.is_vaccinated,
-        gender=static_dog.gender,
+        id=id_dog,
+        id_chip=adoption_dog.id_chip,
+        name=adoption_dog.name,
+        about=adoption_dog.about,
+        age=adoption_dog.age,
+        is_vaccinated=adoption_dog.is_vaccinated,
+        gender=adoption_dog.gender,
         image=image,
-        entry_date=static_dog.entry_date,
-        is_sterilized=static_dog.is_sterilized,
-        is_dewormed=static_dog.is_dewormed,
-        operation=static_dog.operation
+        entry_date=adoption_dog.entry_date,
+        is_sterilized=adoption_dog.is_sterilized,
+        is_dewormed=adoption_dog.is_dewormed,
+        operation=adoption_dog.operation
     )
     try:
         db.merge(db_adoption_dog_update)
