@@ -1,4 +1,5 @@
 # app/models/schema/owner.py
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -11,6 +12,12 @@ class OwnerBase(BaseModel):
 
 class OwnerCreate(OwnerBase):
     pass
+
+
+class OwnerUpdate(BaseModel):
+    name: Optional[str]
+    direction: Optional[str]
+    cellphone: Optional[str]
 
 
 class OwnerResponse(OwnerBase):

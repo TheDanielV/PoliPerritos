@@ -37,3 +37,26 @@ def read_owner_by_id(db: Session, owner_id: int):
     owner = db.query(Owner).filter(Owner.id == owner_id).first()
     owner.decrypt_data()
     return owner
+
+
+def update_owner_by_id(db: Session, owner: OwnerCreate, owner_id: int):
+    db_owner = db.query(Owner).filter(Owner.id == owner_id).first()
+    if owner:
+        db_owner.decrypt_data()
+        if owner.name and owner.name != db_owner.name:
+            db_owner.name = owner.name
+        if owner.cellphone and owner.cellphone != db_owner.cellphone:
+            db_owner.cellphone = owner.cellphone
+        if owner.direction and owner.direction != db_owner.direction:
+            db_owner.direction = owner.direction
+        db_owner.crypt_data()
+    else:
+        return HTTPException(status_code=404, detail="Dueño no encontrado")
+    try:
+        db.merge(db_owner)
+        db.commit()
+        return {"detail": "Dueño actualizado actualizado"}
+    except IntegrityError as ie:
+        db.rollback()
+        print(ie)
+        return HTTPException(status_code=403, detail="could not update")

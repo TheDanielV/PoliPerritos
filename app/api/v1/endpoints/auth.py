@@ -1,3 +1,5 @@
+from typing import List
+
 import pytz
 from fastapi import APIRouter, BackgroundTasks, Form
 from pydantic import EmailStr
@@ -6,11 +8,11 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from app.crud.token import create_token, verify_token
 from app.crud.user import get_user_id_by_email, create_auth_user, update_auth_user_basic_information, \
-    update_auth_user_password, delete_auth_user, auto_create_auth_user
+    update_auth_user_password, delete_auth_user, auto_create_auth_user, read_all_users
 from app.models.domain.token import AuthToken
 from app.core.security import *
 from app.models.domain.user import Role
-from app.models.schema.user import Token, TokenData, UserUpdate, UserCreate
+from app.models.schema.user import Token, TokenData, UserUpdate, UserCreate, UserResponse
 from app.db.session import get_db
 from app.services.crypt import verify_password
 from app.services.email_service import send_email
@@ -136,6 +138,17 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(),
         data={"sub": user.username, "role": user.role}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.get('/', response_model=List[UserResponse])
+def get_all_users(db: Session = Depends(get_db),
+                  current_user: TokenData = Depends(get_current_user)):
+    if current_user.role.value not in ALL_AUTH_ROLES:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    response = read_all_users(db)
+    if not response:
+        raise HTTPException(status_code=404, detail="No se encontraron Usuarios")
+    return response
 
 
 @router.put("/update", response_model=dict)

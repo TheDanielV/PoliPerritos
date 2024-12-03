@@ -19,7 +19,7 @@ class User(Base):
     username = Column(String(255), unique=True, index=True)
     hashed_password = Column(String(255))
     email = Column(String(255), unique=True, nullable=False)
-    role = Column(SQLAEnum(Role), index=True)
+    role = Column(SQLAEnum(Role), nullable=False)
     is_active = Column(Boolean, default=True)
 
     # Relación uno-a-uno con el modelo Token

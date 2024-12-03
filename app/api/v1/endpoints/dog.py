@@ -206,7 +206,11 @@ async def update_a_static_dog(id_dog: int,
         except (ValueError, TypeError):
             raise HTTPException(status_code=400, detail="Invalid image encoding")
     else:
-        image_data = read_static_dogs_by_id(db, id_dog).image
+        dog = read_static_dogs_by_id(db, id_dog)
+        if dog:
+            image_data = dog.image
+        else:
+            raise HTTPException(status_code=404, detail="Perro no encontrado")
     # verificamos el tamaño de la imagen
     if image_data:
         try:
@@ -451,7 +455,11 @@ async def update_an_adoption_dog(id_dog: int,
         except (ValueError, TypeError):
             raise HTTPException(status_code=400, detail="Invalid image encoding")
     else:
-        image_data = read_adoption_dog_by_id(db, id_dog).image
+        dog = read_adoption_dog_by_id(db, id_dog)
+        if dog:
+            image_data = dog.image
+        else:
+            raise HTTPException(status_code=404, detail="Perro no encontrado")
     # verificamos el tamaño de la imagen
     if image_data:
         try:

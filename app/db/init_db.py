@@ -3,6 +3,8 @@ import app.models.domain.dog
 import app.models.domain.owner
 import app.models.domain.visit
 import app.models.domain.token
+import app.models.domain.schedule
+import app.models.domain.course
 
 
 # Se inicia la base de datos y de ser el caso crea la tabla

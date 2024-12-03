@@ -2,6 +2,7 @@ from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.models.domain.owner import Owner
 from app.models.domain.user import User
 from app.models.schema.user import UserCreate, UserUpdate
 from app.services.crypt import get_password_hash, verify_password
@@ -78,6 +79,12 @@ def get_user_id_by_id(db: Session, user_id: int):
         Devuelve el id de un usuario con base en su email.
     """
     return db.query(User).filter(User.id == user_id).first()
+
+
+def read_all_users(db: Session):
+    """Devuelve todos los usuarios.
+    """
+    return db.query(User).all()
 
 
 def update_password(db: Session, user_id: int, new_password: str):
@@ -174,3 +181,5 @@ def delete_auth_user(db: Session, user_id: int, current_user_username: str):
             raise HTTPException(
                 status_code=500, detail=ie
             )
+
+

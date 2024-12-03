@@ -2,16 +2,23 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.crud.owner import create_owner
+
+from app.core.security import get_current_user
+from app.crud.owner import create_owner, update_owner_by_id
 from app.db.session import get_db
-from app.models.schema.owner import OwnerCreate
+from app.models.domain.user import Role
+from app.models.schema.owner import OwnerCreate, OwnerUpdate
+from app.models.schema.user import TokenData
 
 router = APIRouter()
 
 
-@router.post('/owner/', response_model=dict)
-def create_new_owner(owner: OwnerCreate, db: Session = Depends(get_db)):
-    result = create_owner(db, owner)
-    if result is None:
-        raise HTTPException(status_code=404, detail="Ya existe")
-    return result
+@router.put('/update/{id_owner}', response_model=dict)
+def update_course(id_owner: int,
+                  owner: OwnerUpdate,
+                  db: Session = Depends(get_db),
+                  current_user: TokenData = Depends(get_current_user)):
+    if current_user.role.value not in [Role.ADMIN]:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    response = update_owner_by_id(db, owner, id_owner)
+    return response
