@@ -76,7 +76,7 @@ class AdoptedDogCreate(AdoptedDogBase):
 
 class AdoptedDogResponse(BaseModel):
     id: int
-    id_chip: int
+    id_chip: Optional[int]
     name: str
     about: Optional[str]
     age: int
