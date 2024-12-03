@@ -110,20 +110,19 @@ def read_static_dogs_by_id(db: Session, dog_id: int) -> StaticDog:
 def update_static_dog(db: Session, static_dog: StaticDogCreate, id_dog: int, image: bytes = None):
     """
     """
-    db_static_dog_update = StaticDog(
-        id=id_dog,
-        id_chip=static_dog.id_chip,
-        name=static_dog.name,
-        about=static_dog.about,
-        age=static_dog.age,
-        is_vaccinated=static_dog.is_vaccinated,
-        gender=static_dog.gender,
-        image=image,
-        entry_date=static_dog.entry_date,
-        is_sterilized=static_dog.is_sterilized,
-        is_dewormed=static_dog.is_dewormed,
-        operation=static_dog.operation
-    )
+    db_static_dog_update = db.query(StaticDog).filter(StaticDog.id == id_dog).first()
+    db_static_dog_update.id=id_dog
+    db_static_dog_update.id_chip=static_dog.id_chip
+    db_static_dog_update.name=static_dog.name
+    db_static_dog_update.about=static_dog.about
+    db_static_dog_update.age=static_dog.age
+    db_static_dog_update.is_vaccinated=static_dog.is_vaccinated
+    db_static_dog_update.gender=static_dog.gender
+    db_static_dog_update.image=image
+    db_static_dog_update.entry_date=static_dog.entry_date
+    db_static_dog_update.is_sterilized=static_dog.is_sterilized
+    db_static_dog_update.is_dewormed=static_dog.is_dewormed
+    db_static_dog_update.operation=static_dog.operation
     try:
         db.merge(db_static_dog_update)
         db.commit()
