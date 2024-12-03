@@ -26,6 +26,6 @@ class Schedule(Base):
     day = Column(SQLAEnum(Day), nullable=False)
     start_hour = Column(String(10), nullable=False)
     end_hour = Column(String(10), nullable=False)
-    curso_id = Column(Integer, ForeignKey('course.id'))
+    course_id = Column(Integer, ForeignKey('course.id'))
 
     course = relationship("Course", back_populates="schedule")

@@ -32,10 +32,7 @@ def create_new_course(course: CourseCreate,
 
 
 @router.get('/', response_model=List[CourseResponse])
-def get_all_courses(db: Session = Depends(get_db),
-                    current_user: TokenData = Depends(get_current_user)):
-    if current_user.role.value not in [Role.ADMIN]:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+def get_all_courses(db: Session = Depends(get_db)):
     response = read_all_course(db)
     if not response:
         raise HTTPException(status_code=404, detail="No se encontraron cursos")
@@ -44,10 +41,7 @@ def get_all_courses(db: Session = Depends(get_db),
 
 @router.get('/{id_course}', response_model=CourseResponse)
 def get_course_by_id(id_course: int,
-                     db: Session = Depends(get_db),
-                     current_user: TokenData = Depends(get_current_user)):
-    if current_user.role.value not in [Role.ADMIN]:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+                     db: Session = Depends(get_db)):
     response = read_course_by_id(db, id_course)
     if not response:
         raise HTTPException(status_code=404, detail="No se encontraron cursos")
