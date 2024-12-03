@@ -3,8 +3,6 @@ from sqlalchemy import Column, Integer, String, Text, Date, Float
 from sqlalchemy.orm import relationship
 
 from app.db.database import Base
-from app.models.domain.applicant import applicant_course
-from app.services.crypt import decrypt_str_data, encrypt_str_data
 
 
 # Se crea el modelo paara un usuario
@@ -19,9 +17,5 @@ class Course(Base):
     price = Column(Float, nullable=False)
     capacity = Column(Integer, nullable=False)
     schedule = relationship("Schedule", back_populates="course", cascade="all, delete-orphan")
-    applicant = relationship(
-        "Applicant",
-        secondary=applicant_course,
-        back_populates="course"
-    )
+    applicant = relationship('Applicant', back_populates='course', cascade='all, delete-orphan')  # Relación con Applicant
 

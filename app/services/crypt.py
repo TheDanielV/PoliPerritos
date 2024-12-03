@@ -54,3 +54,35 @@ def decrypt_str_data(encrypted_data: str):
     unpadder = padding.PKCS7(128).unpadder()
     data = unpadder.update(padded_data) + unpadder.finalize()
     return data.decode()
+
+
+def encrypt_image(image_data: bytes) -> bytes:
+    iv = generate_iv()
+    cipher = Cipher(algorithms.AES(AES_KEY), modes.CBC(iv), backend=default_backend())
+    encryptor = cipher.encryptor()
+
+    # Aplicar padding
+    padder = padding.PKCS7(128).padder()
+    padded_data = padder.update(image_data) + padder.finalize()
+
+    # Cifrar la imagen
+    encrypted_data = encryptor.update(padded_data) + encryptor.finalize()
+
+    # Codificar como Base64 y devolver como bytes
+    return b64encode(iv + encrypted_data)
+
+
+def decrypt_image(encrypted_image_data: bytes) -> bytes:
+    # Decodificar desde Base64
+    raw_data = b64decode(encrypted_image_data)
+    iv = raw_data[:16]  # Extraer IV
+    encrypted_data = raw_data[16:]  # Extraer datos cifrados
+
+    cipher = Cipher(algorithms.AES(AES_KEY), modes.CBC(iv), backend=default_backend())
+    decryptor = cipher.decryptor()
+
+    # Descifrar y eliminar padding
+    padded_data = decryptor.update(encrypted_data) + decryptor.finalize()
+    unpadder = padding.PKCS7(128).unpadder()
+    image_data = unpadder.update(padded_data) + unpadder.finalize()
+    return image_data
