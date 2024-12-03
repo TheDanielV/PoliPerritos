@@ -16,5 +16,6 @@ class Course(Base):
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
     price = Column(Float, nullable=False)
+    capacity = Column(Integer, nullable=False)
     schedule = relationship("Schedule", back_populates="course", cascade="all, delete-orphan")
 

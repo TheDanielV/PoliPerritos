@@ -13,6 +13,7 @@ class CourseBase(BaseModel):
     start_date: date
     end_date: date
     price: float
+    capacity: int
 
 
 class CourseCreate(CourseBase):

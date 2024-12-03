@@ -21,7 +21,8 @@ def create_course(db: Session, course: CourseCreate) -> dict:
         description=course.description,
         start_date=course.start_date,
         end_date=course.end_date,
-        price=course.price
+        price=course.price,
+        capacity=course.capacity
     )
     for schedule in course.schedule:
         sch = Schedule(
@@ -74,7 +75,8 @@ def update_course_by_id(db: Session, course: CourseCreate, course_id: int):
         description=course.description,
         start_date=course.start_date,
         end_date=course.end_date,
-        price=course.price
+        price=course.price,
+        capacity=course.capacity
     )
     for schedule in course.schedule:
         sch = Schedule(
