@@ -67,11 +67,14 @@ class AdoptionDogResponse(AdoptionDogBase):
 # Schema for adopted dogs
 class AdoptedDogBase(DogBase):
     adopted_date: date
-    owner: OwnerBase
 
 
 class AdoptedDogCreate(AdoptedDogBase):
     owner_id: int
+
+
+class AdoptedDogUpdate(AdoptionDogBase):
+    pass
 
 
 class AdoptedDogResponse(BaseModel):

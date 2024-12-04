@@ -293,7 +293,7 @@ def read_all_adopted_dogs(db: Session):
     """
     dogs = db.query(AdoptedDog).all()
     for dog in dogs:
-        dog.owner.decrypt_data()
+        dog.owner.decrypt_owner_data()
     return dogs
 
 
@@ -304,8 +304,37 @@ def read_adopted_dogs_by_id(db: Session, dog_id: int) -> AdoptedDog:
     dog = db.query(AdoptedDog).filter(AdoptedDog.id == dog_id).first()
 
     if dog:
-        dog.owner.decrypt_data()
+        dog.owner.decrypt_owner_data()
     return dog
+
+
+def update_adopted_dog(db: Session, adoption_dog: AdoptionDogCreate, id_dog: int, image: bytes = None):
+    """
+    """
+    db_dog = db.query(AdoptedDog).filter(AdoptedDog.id == id_dog).first()
+    db_dog.owner.crypt_data()
+    db_adoption_dog_update = AdoptedDog(
+        id=id_dog,
+        id_chip=adoption_dog.id_chip,
+        name=adoption_dog.name,
+        about=adoption_dog.about,
+        age=adoption_dog.age,
+        is_vaccinated=adoption_dog.is_vaccinated,
+        gender=adoption_dog.gender,
+        image=image,
+        entry_date=adoption_dog.entry_date,
+        is_sterilized=adoption_dog.is_sterilized,
+        is_dewormed=adoption_dog.is_dewormed,
+        operation=adoption_dog.operation,
+        owner=db_dog.owner
+    )
+    try:
+        db.merge(db_adoption_dog_update)
+        db.commit()
+        return {"detail": "Perro Adoptado Actualizado"}
+    except IntegrityError:
+        db.rollback()
+        return None
 
 
 def unadopt_dog(db: Session, adoption_dog: AdoptionDog):

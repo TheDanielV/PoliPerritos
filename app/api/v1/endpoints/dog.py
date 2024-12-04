@@ -13,11 +13,11 @@ from sqlalchemy.orm import Session
 from app.core.security import get_current_user
 from app.crud.dog import read_all_static_dogs, read_static_dogs_by_id, create_static_dog, delete_an_static_dog_by_id, \
     read_all_adoption_dogs, read_adoption_dog_by_id, create_adoption_dog, delete_an_adoption_dog_by_id, \
-    read_all_adopted_dogs, read_adopted_dogs_by_id, update_static_dog, update_adoption_dog
+    read_all_adopted_dogs, read_adopted_dogs_by_id, update_static_dog, update_adoption_dog, update_adopted_dog
 from app.db.session import get_db
 from app.models.domain.user import Role
 from app.models.schema.dog import StaticDogResponse, StaticDogCreate, AdoptionDogResponse, AdoptionDogCreate, \
-    AdoptedDogResponse
+    AdoptedDogResponse, AdoptedDogUpdate
 from app.models.schema.owner import OwnerCreate, OwnerResponse
 from app.models.schema.user import TokenData
 from app.services.images_control_service import verify_image_size
@@ -523,6 +523,86 @@ def get_adopted_dog_image(dog_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Imagen no encontrada")
 
     return StreamingResponse(io.BytesIO(adopted_dog.image), media_type="image/jpeg")
+
+
+@router.put('/adopted_dog/update/{id_dog}', response_model=dict)
+async def update_an_adopted_dog(id_dog: int,
+                                 dog: AdoptedDogUpdate,
+                                 db: Session = Depends(get_db),
+                                 current_user: TokenData = Depends(get_current_user)):
+    """
+    English:
+    --------
+    Update an adopted dog:
+
+    - **id_chip** (optional): chip of the dog.
+    - **name** (required): Name of the dog.
+    - **about** (optional): Description of the dog.
+    - **age** (required): Age of the dog.
+    - **is_vaccinated** (required): Indicates if the dog is vaccinated. Must be a boolean:
+        - **true**: The dog is vaccinated.
+        - **false**: The dog is not vaccinated.
+    - **image** (optional): Base64 encrypted image of the dog.
+    - **gender** (required): Gender of the dog. Must be one of:
+        - **male**: Represents a male dog.
+        - **female**: Represents a female dog.
+    - **entry_date** (optional): Date of the entry in format YYYY-MM-DD.
+    - **is_sterilized** (required): Indicates if the dog is sterilized. Must be a boolean:
+        - **true**: The dog is sterilized.
+        - **false**: The dog is not sterilized
+    - **is_dewormed** (required): Indicates if the dog is dewormed. Must be a boolean:
+        - **true**: The dog is dewormed.
+        - **false**: The dog is not dewormed
+    - **operation** (optional): Specify the operation of the dog.
+    Español:
+    --------
+    Actualizar un perro adoptado:
+
+    - **id_chip** (optional): Chip del perro.
+    - **name** (required): Nombre del perro.
+    - **about** (optional): Descripción del perro.
+    - **age** (required): Edad del perro.
+    - **is_vaccinated** (required): Indica si el perro esta vacunado. Debe ser un boolean:
+        - **true**: El perro esta vacunado.
+        - **false**: El perro no esta vacunado.
+    - **image** (optional): Imagen del perro encriptad en base64.
+    - **gender** (required): Genero del perro. Debe ser uno de los siguientes:
+        - **male**: Representa un perro macho.
+        - **female**: Representa un perro hembra.
+    - **entry_date** (optional): Fecha de entrada en formato YYYY-MM-DD.
+    - **is_sterilized** (required): Indica si el perro esta esterilizado. Debe ser un boolean:
+        - **true**: El perro esta esterilizado.
+        - **false**: El perro no esta esterilizado.
+    - **is_dewormed** (required): Indica si el perro esta desparasitado. Debe ser un boolean:
+        - **true**: El perro esta desparasitado.
+        - **false**: El perro no esta desparasitado.
+    - **operation** (optional): Especifica la/las operaciones del perro.
+    """
+    if current_user.role.value not in [Role.ADMIN, Role.AUXILIAR]:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    if dog.image:
+        try:
+            image_data = base64.b64decode(dog.image)
+        except (ValueError, TypeError):
+            raise HTTPException(status_code=400, detail="Invalid image encoding")
+    else:
+        db_dogg = read_adopted_dogs_by_id(db, id_dog)
+        if db_dogg:
+            image_data = db_dogg.image
+        else:
+            raise HTTPException(status_code=404, detail="Perro no encontrado")
+    # verificamos el tamaño de la imagen
+    if image_data:
+        try:
+            verify_image_size(image_data)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid image size")
+    # Crear el perro en la base de datos
+    result = update_adopted_dog(db, dog, id_dog, image_data)
+    if result is None:
+        raise HTTPException(status_code=409, detail="Error al actualizar el perro")
+    return result
 
 
 @router.post('/adopted_dog/unadopt/{dog_id}/', response_model=dict)
