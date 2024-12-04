@@ -21,6 +21,6 @@ class Owner(Base):
         self.direction = encrypt_str_data(self.direction)
         self.cellphone = encrypt_str_data(self.cellphone)
 
-    def decrypt_data(self):
+    def decrypt_owner_data(self):
         self.direction = decrypt_str_data(self.direction)
         self.cellphone = decrypt_str_data(self.cellphone)

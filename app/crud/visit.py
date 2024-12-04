@@ -1,3 +1,5 @@
+import binascii
+
 from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -5,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.models.domain.dog import AdoptedDog
 from app.models.domain.visit import Visit
 from app.models.schema.visit import VisitCreate, VisitUpdate
+from app.services.crypt import decrypt_str_data
 
 
 def create_a_visit(db: Session, visit: VisitCreate, adopted_dog: AdoptedDog, evidence: bytes = None):
@@ -43,7 +46,10 @@ def get_all_visits(db: Session):
      """
     visits_raw = db.query(Visit).all()
     for visit in visits_raw:
-        visit.adopted_dog.owner.decrypt_data()
+        try:
+            visit.adopted_dog.owner.decrypt_owner_data()
+        except binascii.Error:
+            pass
     return visits_raw
 
 
@@ -62,7 +68,11 @@ def get_all_visits_by_dog(db: Session, dog_id: int):
      """
     visits_raw = db.query(Visit).filter(Visit.adopted_dog_id == dog_id).all()
     for visit in visits_raw:
-        visit.adopted_dog.owner.decrypt_data()
+        try:
+            visit.adopted_dog.owner.decrypt_owner_data()
+        except binascii.Error:
+            pass
+
     return visits_raw
 
 
@@ -72,7 +82,7 @@ def read_visit_by_id(db: Session, visit_id: int):
     """
     visit = db.query(Visit).filter(Visit.id == visit_id).first()
     if visit:
-        visit.adopted_dog.owner.decrypt_data()
+        visit.adopted_dog.owner.decrypt_owner_data()
     return visit
 
 

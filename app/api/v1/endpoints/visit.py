@@ -1,4 +1,5 @@
 import base64
+import binascii
 import io
 import os
 from typing import List
@@ -132,6 +133,10 @@ async def get_visits_by_dog_id(dog_id: int, db: Session = Depends(get_db),
         if visit.evidence:
             visit.evidence = f'{API_URL}/visits/{visit.id}/evidence'
 
+        try:
+            visit.adopted_dog.owner.decrypt_owner_data()
+        except binascii.Error:
+            pass
         visits.append(visit)
 
     return visits
