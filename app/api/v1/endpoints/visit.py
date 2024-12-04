@@ -37,7 +37,7 @@ async def create_new_visit(visit: VisitCreate,
     Create a visit for an adopted dog:
 
     - **visit_date** (required): date of the visit in format YYYY-MM-DD.
-    - **evidence** (required): base64 encrypted image of a evidence of the visit.
+    - **evidence** (optional): base64 encrypted image of a evidence of the visit.
     - **observations** (optional): any observation of the visit.
     - **adopted_dog_id** (required): id of the dog visited.
 
@@ -46,7 +46,7 @@ async def create_new_visit(visit: VisitCreate,
     Crear una visita para un perro adoptado:
 
     - **visit_date** (required): fecha de la visita en formato YYYY-MM-DD.
-    - **evidence** (required): imagen encriptada en base 64 de la visita.
+    - **evidence** (optional): imagen encriptada en base 64 de la visita.
     - **observations** (optional): observación de la visita.
     - **adopted_dog_id** (required): id del perro visitado.
     """
@@ -191,7 +191,7 @@ async def update_visit_by_id(visit_update: VisitUpdate, db: Session = Depends(ge
     Update a visit for an adopted dog:
 
     - **visit_date** (required): date of the visit in format YYYY-MM-DD.
-    - **evidence** (required): base64 encrypted image of a evidence of the visit.
+    - **evidence** (optional): base64 encrypted image of a evidence of the visit.
     - **observations** (optional): any observation of the visit.
     - **adopted_dog_id** (required): id of the dog visited.
     - **id** (required): id of the visit to be updated.
@@ -201,7 +201,7 @@ async def update_visit_by_id(visit_update: VisitUpdate, db: Session = Depends(ge
     Actualiza una visita para un perro adoptado:
 
     - **visit_date** (required): fecha de la visita en formato YYYY-MM-DD.
-    - **evidence** (required): imagen encriptada en base 64 de la visita.
+    - **evidence** (optional): imagen encriptada en base 64 de la visita.
     - **observations** (optional): observación de la visita.
     - **adopted_dog_id** (required): id del perro visitado.
     - **id** (required): id de la visita a ser actualizada.

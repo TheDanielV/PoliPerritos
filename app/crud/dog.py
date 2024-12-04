@@ -1,4 +1,6 @@
 # Poliperritos/app/crud/dog.py
+import binascii
+
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
 from sqlalchemy.orm import Session
 
@@ -304,7 +306,10 @@ def read_adopted_dogs_by_id(db: Session, dog_id: int) -> AdoptedDog:
     dog = db.query(AdoptedDog).filter(AdoptedDog.id == dog_id).first()
 
     if dog:
-        dog.owner.decrypt_owner_data()
+        try:
+            dog.owner.decrypt_owner_data()
+        except binascii.Error:
+            pass
     return dog
 
 

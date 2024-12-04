@@ -9,7 +9,7 @@ from app.models.schema.dog import AdoptedDogResponse
 
 class VisitBase(BaseModel):
     visit_date: date
-    evidence: str
+    evidence: Optional[str]
     observations: Optional[str]
 
 
