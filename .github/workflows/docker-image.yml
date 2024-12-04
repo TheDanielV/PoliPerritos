@@ -28,7 +28,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -f docker/Dockerfile -t poliperritos:latest .
+          docker build -f docker/Dockerfile -t poliperritos .
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
@@ -38,7 +38,7 @@ jobs:
 
       - name: Push Docker image
         run: |
-          docker tag poliperritos:latest ${{ secrets.DOCKER_HUB_USERNAME }}/poliperritos:${{ github.sha }} .
+          docker tag poliperritos ${{ secrets.DOCKER_HUB_USERNAME }}/poliperritos:${{ github.sha }} .
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/poliperritos:${{ github.sha }} .
           
   deploy-to-azure:
