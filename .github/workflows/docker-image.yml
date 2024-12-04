@@ -55,6 +55,6 @@ jobs:
       - name: Update Azure Container App
         run: |
           az containerapp update \
-            --name poliperrosback \
+            --name poliperritosback \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
             --image ${{ secrets.DOCKER_HUB_USERNAME }}/poliperros:${{ github.sha }}
