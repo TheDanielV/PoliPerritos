@@ -9,7 +9,7 @@ on:
 
 
 jobs:
-  build:
+  build-and-push-docker:
     runs-on: ubuntu-latest
 
     steps:
@@ -38,5 +38,23 @@ jobs:
 
       - name: Push Docker image
         run: |
-          docker tag poliperritos:latest ${{ secrets.DOCKER_HUB_USERNAME }}/poliperritos:latest
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/poliperritos:latest
+          docker tag poliperritos:latest ${{ secrets.DOCKER_HUB_USERNAME }}/poliperritos:${{ github.sha }} .
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/poliperritos:${{ github.sha }} .
+          
+  deploy-to-azure:
+    needs: build-and-push-docker
+    runs-on: ubuntu-latest
+    steps:
+      # Azure CLI Login
+      - name: Log in to Azure CLI
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Update Container App with New Image
+      - name: Update Azure Container App
+        run: |
+          az containerapp update \
+            --name poliperrosback \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --image ${{ secrets.DOCKER_HUB_USERNAME }}/poliperros:${{ github.sha }}
