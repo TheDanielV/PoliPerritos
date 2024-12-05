@@ -17,7 +17,7 @@ class Owner(Base):
     # Relación uno a muchos con AdoptedDog
     adopted_dogs = relationship("AdoptedDog", back_populates="owner", cascade="all, delete-orphan")
 
-    def crypt_data(self):
+    def crypt_owner_data(self):
         self.direction = encrypt_str_data(self.direction)
         self.cellphone = encrypt_str_data(self.cellphone)
 

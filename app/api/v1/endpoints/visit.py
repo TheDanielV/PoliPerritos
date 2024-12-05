@@ -69,7 +69,7 @@ async def create_new_visit(visit: VisitCreate,
     adopted_dog = read_adopted_dogs_by_id(db, visit.adopted_dog_id)
     if not adopted_dog:
         raise HTTPException(status_code=404, detail=f'No se encontro al perro con id: {visit.adopted_dog_id}')
-    adopted_dog.owner.crypt_data()
+    adopted_dog.owner.crypt_owner_data()
     result = create_a_visit(db, visit, adopted_dog, image_data)
     if result is None:
         raise HTTPException(status_code=409, detail="La visita que desea registrar ya existe")
@@ -226,7 +226,7 @@ async def update_visit_by_id(visit_update: VisitUpdate, db: Session = Depends(ge
 
     # Verificamos que el perro asociado a la visita exista
     adopted_dog = read_adopted_dogs_by_id(db, visit_update.adopted_dog_id)
-    adopted_dog.owner.crypt_data()
+    adopted_dog.owner.crypt_owner_data()
     if not adopted_dog:
         raise HTTPException(status_code=404, detail=f'No se encontro al perro con id: {visit_update.adopted_dog_id}')
     result = update_visit(db, visit_update, adopted_dog, image_data)

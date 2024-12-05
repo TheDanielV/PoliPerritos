@@ -14,7 +14,7 @@ def create_owner(db: Session, owner: OwnerCreate):
         cellphone=owner.cellphone,
 
     )
-    db_owner.crypt_data()
+    db_owner.crypt_owner_data()
     try:
         db.add(db_owner)
         db.commit()
@@ -26,7 +26,7 @@ def create_owner(db: Session, owner: OwnerCreate):
 
 
 def create_owner_without_commit(db: Session, owner: Owner):
-    owner.crypt_data()
+    owner.crypt_owner_data()
     db.add(owner)
 
 
@@ -35,21 +35,21 @@ def read_owner_by_id(db: Session, owner_id: int):
     Devuelve un perro estatico por su id.
     """
     owner = db.query(Owner).filter(Owner.id == owner_id).first()
-    owner.decrypt_data()
+    owner.decrypt_owner_data()
     return owner
 
 
 def update_owner_by_id(db: Session, owner: OwnerCreate, owner_id: int):
     db_owner = db.query(Owner).filter(Owner.id == owner_id).first()
     if owner:
-        db_owner.decrypt_data()
+        db_owner.decrypt_owner_data()
         if owner.name and owner.name != db_owner.name:
             db_owner.name = owner.name
         if owner.cellphone and owner.cellphone != db_owner.cellphone:
             db_owner.cellphone = owner.cellphone
         if owner.direction and owner.direction != db_owner.direction:
             db_owner.direction = owner.direction
-        db_owner.crypt_data()
+        db_owner.crypt_owner_data()
     else:
         return HTTPException(status_code=404, detail="Dueño no encontrado")
     try:

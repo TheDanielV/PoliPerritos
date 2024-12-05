@@ -1,16 +1,16 @@
 # Poliperritos/app/crud/dog.py
 import binascii
+from typing import List
 
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
 from sqlalchemy.orm import Session
 
-from app.crud.owner import read_owner_by_id
 from app.models.domain.dog import *
 from app.models.schema.dog import *
 
 
 # Crud 4 Static Dogs
-def create_static_dog(db: Session, static_dog: StaticDogCreate, image: bytes = None):
+def create_static_dog(db: Session, static_dog: StaticDogCreate, image: bytes = None) -> dict:
     """
        Crea y guarda un perro estático en la base de datos.
 
@@ -86,7 +86,7 @@ def create_static_dog(db: Session, static_dog: StaticDogCreate, image: bytes = N
         return None
 
 
-def read_all_static_dogs(db: Session):
+def read_all_static_dogs(db: Session) -> List[StaticDog]:
     """
      Devuelve una lista de perros estáticos existentes.
 
@@ -104,12 +104,12 @@ def read_all_static_dogs(db: Session):
 
 def read_static_dogs_by_id(db: Session, dog_id: int) -> StaticDog:
     """
-    Devuelve un perro estatico por su id.
+    Devuelve un perro estático por su id.
     """
     return db.query(StaticDog).filter(StaticDog.id == dog_id).first()
 
 
-def update_static_dog(db: Session, static_dog: StaticDogCreate, id_dog: int, image: bytes = None):
+def update_static_dog(db: Session, static_dog: StaticDogCreate, id_dog: int, image: bytes = None) -> dict:
     """
     """
     db_static_dog_update = db.query(StaticDog).filter(StaticDog.id == id_dog).first()
@@ -135,7 +135,7 @@ def update_static_dog(db: Session, static_dog: StaticDogCreate, id_dog: int, ima
 
 def delete_an_static_dog_by_id(db: Session, dog_id: int):
     """
-    Elimina un perro estatico por su id.
+    Elimina un perro estático por su id.
     """
     dog = db.query(StaticDog).filter(StaticDog.id == dog_id).first()
     if dog is None:
@@ -151,7 +151,7 @@ def delete_an_static_dog_by_id(db: Session, dog_id: int):
 
 
 # Crud 4 adoption Dogs
-def create_adoption_dog(db: Session, adoption_dog: AdoptionDogCreate, image: bytes = None):
+def create_adoption_dog(db: Session, adoption_dog: AdoptionDogCreate, image: bytes = None) -> dict:
     """
      Crea y guarda un perro de adopción en la base de datos.
 
@@ -197,7 +197,7 @@ def create_adoption_dog(db: Session, adoption_dog: AdoptionDogCreate, image: byt
     try:
         db.add(db_adoption_dog)
         db.commit()
-        return {"detail": "Perro de adopcion creado"}
+        return {"detail": "Perro de adopción creado"}
     except IntegrityError:
         db.rollback()
         return None
@@ -206,9 +206,9 @@ def create_adoption_dog(db: Session, adoption_dog: AdoptionDogCreate, image: byt
         return None
 
 
-def read_all_adoption_dogs(db: Session):
+def read_all_adoption_dogs(db: Session) -> List[AdoptionDog]:
     """
-    Devuelve una lista de todos los perros para adopcion en la base de datos.
+    Devuelve una lista de todos los perros para adopción en la base de datos.
     :rtype: List[AdoptionDog]
     :param db:
     :return:
@@ -216,9 +216,9 @@ def read_all_adoption_dogs(db: Session):
     return db.query(AdoptionDog).all()
 
 
-def read_adoption_dog_by_id(db: Session, dog_id: int):
+def read_adoption_dog_by_id(db: Session, dog_id: int) -> AdoptionDog:
     """
-    Devuelve un perro de adopcion por su id.
+    Devuelve un perro de adopción por su id.
     :rtype: AdoptionDog
     :param db:
     :param dog_id:
@@ -317,7 +317,7 @@ def update_adopted_dog(db: Session, adoption_dog: AdoptionDogCreate, id_dog: int
     """
     """
     db_dog = db.query(AdoptedDog).filter(AdoptedDog.id == id_dog).first()
-    db_dog.owner.crypt_data()
+    db_dog.owner.crypt_owner_data()
     db_adoption_dog_update = AdoptedDog(
         id=id_dog,
         id_chip=adoption_dog.id_chip,
