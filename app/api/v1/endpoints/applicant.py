@@ -10,7 +10,7 @@ from starlette.responses import StreamingResponse
 
 from app.core.security import get_current_user
 from app.crud.applicant import create_applicant, read_all_applicants_by_course, read_number_of_applicants_by_course, \
-    read_applicant_by_id
+    read_applicant_by_id, delete_applicant_by_id
 from app.crud.course import read_course_by_id
 from app.db.session import get_db
 from app.models.domain.user import Role
@@ -112,3 +112,25 @@ def get_applicant_img(applicant_img: int, db: Session = Depends(get_db),
         raise HTTPException(status_code=404, detail="Imagen no encontrada")
 
     return StreamingResponse(io.BytesIO(applicant.image), media_type="image/jpeg")
+
+
+@router.delete('/delete/{id_visit}', response_model=dict)
+def delete_an_applicant_by_id(id_applicant: int, db: Session = Depends(get_db),
+                              current_user: TokenData = Depends(get_current_user)):
+    """
+    English:
+    --------
+    Delete a visit:
+
+    - **id_visit** (required): Id of the visit.
+
+    Español:
+    --------
+    Borrar una visita:
+
+    - **id_visit** (required): ID de la visita.
+    """
+    if current_user.role.value not in [Role.ADMIN]:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    applicant_response = delete_applicant_by_id(db, id_applicant)
+    return applicant_response

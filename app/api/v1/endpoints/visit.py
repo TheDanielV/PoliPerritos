@@ -253,5 +253,5 @@ def delete_a_visit_by_id(id_visit: int, db: Session = Depends(get_db),
     """
     if current_user.role.value not in [Role.ADMIN]:
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    dog_response = delete_visit_by_id(db, id_visit)
-    return dog_response
+    visit_response = delete_visit_by_id(db, id_visit)
+    return visit_response

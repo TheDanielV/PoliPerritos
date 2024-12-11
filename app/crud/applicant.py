@@ -49,7 +49,8 @@ def read_applicant_by_id(db: Session, applicant_id):
     """Devuelve todos los usuarios.
     """
     applicant = db.query(Applicant).filter(Applicant.id == applicant_id).first()
-    applicant.decrypt_data()
+    if applicant:
+        applicant.decrypt_data()
     return applicant
 
 
@@ -61,3 +62,32 @@ def read_number_of_applicants_by_course(db, course_id):
     else:
         capacity = 1
     return count, capacity
+
+
+def delete_applicant_by_id(db: Session, applicant_id: int):
+    """
+    Deletes a applicant by their ID.
+
+    Args:
+        db (Session): Database session.
+        applicant_id (int): ID of the visit to delete.
+
+    Raises:
+        HTTPException: Raised with appropriate status codes and messages.
+    """
+    applicant = db.query(Applicant).filter(Applicant.id == applicant_id).first()
+
+    if Applicant is None:
+        raise HTTPException(
+            status_code=404, detail="Solicitud no encontrada."
+        )
+    else:
+        try:
+            db.delete(applicant)
+            db.commit()
+            return {"success": True, "message": "Solicitud eliminada"}
+        except IntegrityError as ie:
+            db.rollback()
+            raise HTTPException(
+                status_code=500, detail=ie
+            )

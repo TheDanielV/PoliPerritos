@@ -35,7 +35,8 @@ def read_owner_by_id(db: Session, owner_id: int):
     Devuelve un perro estatico por su id.
     """
     owner = db.query(Owner).filter(Owner.id == owner_id).first()
-    owner.decrypt_owner_data()
+    if owner:
+        owner.decrypt_owner_data()
     return owner
 
 

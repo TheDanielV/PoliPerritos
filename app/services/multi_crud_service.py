@@ -1,7 +1,8 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
-from app.crud.dog import create_adopted_dog_without_commit
+from app.crud.dog import create_adopted_dog_without_commit, is_the_owner_whit_more_than_a_dog
 from app.crud.owner import create_owner_without_commit
 from app.crud.token import verify_token, mark_token_as_used
 from app.crud.user import update_password
@@ -39,12 +40,16 @@ def un_adopt_dog_service(db: Session, adopted_dog: AdoptedDog):
     if adopted_dog is None:
         raise HTTPException(status_code=404, detail="No existe")
     adoption_dog = adopted_dog.unadopt()
-    if adopted_dog.owner:
+    try:
         db.add(adoption_dog)
         db.delete(adopted_dog)
-        db.delete(adopted_dog.owner)
+        if not is_the_owner_whit_more_than_a_dog(db, adopted_dog.owner.id):
+            # en caso de tener más de un perro, no eliminaremos al dueño
+            db.delete(adopted_dog.owner)
+        else:
+            adopted_dog.owner.crypt_owner_data()
         db.commit()
         return {"detail": "Perro des adoptado."}
-    else:
+    except IntegrityError as ie:
         db.rollback()
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        raise HTTPException(status_code=404, detail=ie)

@@ -22,3 +22,4 @@ def update_owner(id_owner: int,
         raise HTTPException(status_code=403, detail="Not enough permissions")
     response = update_owner_by_id(db, owner, id_owner)
     return response
+

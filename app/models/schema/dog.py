@@ -74,6 +74,7 @@ class AdoptedDogCreate(AdoptedDogBase):
 
 
 class AdoptedDogUpdate(AdoptionDogBase):
+    adopted_date: date
     pass
 
 

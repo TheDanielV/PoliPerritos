@@ -13,7 +13,9 @@ from sqlalchemy.orm import Session
 from app.core.security import get_current_user
 from app.crud.dog import read_all_static_dogs, read_static_dogs_by_id, create_static_dog, delete_an_static_dog_by_id, \
     read_all_adoption_dogs, read_adoption_dog_by_id, create_adoption_dog, delete_an_adoption_dog_by_id, \
-    read_all_adopted_dogs, read_adopted_dogs_by_id, update_static_dog, update_adoption_dog, update_adopted_dog
+    read_all_adopted_dogs, read_adopted_dogs_by_id, update_static_dog, update_adoption_dog, update_adopted_dog, \
+    adopt_dog
+from app.crud.owner import read_owner_by_id
 from app.db.session import get_db
 from app.models.domain.user import Role
 from app.models.schema.dog import StaticDogResponse, StaticDogCreate, AdoptionDogResponse, AdoptionDogCreate, \
@@ -351,6 +353,40 @@ def adopt_dog_by_id(dog_id: int, adoption_date: date, owner: OwnerCreate, db: Se
     return result
 
 
+@router.post('/adoption_dog/adopt/{dog_id}/{owner_id}/{adoption_date}', response_model=dict)
+def adopt_dog_by_id_and_existing_owner(dog_id: int, adoption_date: date, owner_id: int,
+                                       db: Session = Depends(get_db),
+                                       current_user: TokenData = Depends(get_current_user)):
+    """
+    English:
+    --------
+    Adopt a dog that is available for adoption:
+
+    - **dog_id** (required): id of the adoption dog to be adopted.
+    - **adoption_date** (required): Date of the adoption in format YYYY-MM-DD.
+    - **owner_id** (required): Id of an existing owner.
+
+    Español:
+    --------
+    Adoptar a un perro que esté disponible para adopción:
+
+    - **dog_id** (required): id del perro de adopción.
+    - **adoption_date** (required): Fecha de la adopción en formatoYYYY-MM-DD.
+    - **owner_id** (required): Id de un Dueño existente.
+    """
+    if current_user.role.value not in [Role.ADMIN, Role.AUXILIAR]:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    adoption_dog = read_adoption_dog_by_id(db, dog_id)
+    if adoption_dog is None:
+        raise HTTPException(status_code=404, detail="Perro de adopción no existe")
+    owner = read_owner_by_id(db, owner_id)
+    if owner is None:
+        raise HTTPException(status_code=404, detail="Dueño no existe")
+    adopted_dog = adoption_dog.adopt_existing_owner(adoption_date, owner)
+    result = adopt_dog(db, adopted_dog)
+    return result
+
+
 @router.get('/adoption_dog/', response_model=List[StaticDogResponse])
 def get_adoption_dogs(db: Session = Depends(get_db)):
     """
@@ -527,9 +563,9 @@ def get_adopted_dog_image(dog_id: int, db: Session = Depends(get_db)):
 
 @router.put('/adopted_dog/update/{id_dog}', response_model=dict)
 async def update_an_adopted_dog(id_dog: int,
-                                 dog: AdoptedDogUpdate,
-                                 db: Session = Depends(get_db),
-                                 current_user: TokenData = Depends(get_current_user)):
+                                dog: AdoptedDogUpdate,
+                                db: Session = Depends(get_db),
+                                current_user: TokenData = Depends(get_current_user)):
     """
     English:
     --------

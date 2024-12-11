@@ -26,7 +26,7 @@ class Dog(Base):
     is_vaccinated = Column(Boolean, unique=False, nullable=False)
     image = Column(LONGBLOB, nullable=True)
     gender = Column(SQLAEnum(Gender), default=False, nullable=False)
-    entry_date = Column(Date,nullable=True)
+    entry_date = Column(Date, nullable=True)
     is_sterilized = Column(Boolean, unique=False, nullable=False)
     is_dewormed = Column(Boolean, unique=False, nullable=False)
     operation = Column(String(255), nullable=True)
@@ -45,6 +45,26 @@ class AdoptionDog(Dog):
             direction=owner_create.direction,
             cellphone=owner_create.cellphone
         )
+        adopted_dog = AdoptedDog(
+            id=self.id,
+            id_chip=self.id_chip,
+            name=self.name,
+            about=self.about,
+            age=self.age,
+            is_vaccinated=self.is_vaccinated,
+            gender=self.gender,
+            adopted_date=date,
+            owner=owner,
+            image=self.image,
+            entry_date=self.entry_date,
+            is_sterilized=self.is_sterilized,
+            is_dewormed=self.is_dewormed,
+            operation=self.operation
+
+        )
+        return adopted_dog
+
+    def adopt_existing_owner(self, date: Date, owner: Owner):
         adopted_dog = AdoptedDog(
             id=self.id,
             id_chip=self.id_chip,
@@ -89,5 +109,3 @@ class AdoptedDog(Dog):
             operation=self.operation
         )
         return adoption_dog
-
-

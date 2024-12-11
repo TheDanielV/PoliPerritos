@@ -270,6 +270,7 @@ def delete_an_adoption_dog_by_id(db: Session, dog_id: int):
 
 def adopt_dog(db: Session, adopted_dog: AdoptedDog):
     adoption_dog = read_adoption_dog_by_id(db, adopted_dog.id)
+    adopted_dog.owner.crypt_owner_data()
     try:
         db.add(adopted_dog)
         db.add(adopted_dog.owner)
@@ -295,7 +296,11 @@ def read_all_adopted_dogs(db: Session):
     """
     dogs = db.query(AdoptedDog).all()
     for dog in dogs:
-        dog.owner.decrypt_owner_data()
+        try:
+            dog.owner.decrypt_owner_data()
+        except binascii.Error:
+            pass
+
     return dogs
 
 
@@ -344,12 +349,20 @@ def update_adopted_dog(db: Session, adoption_dog: AdoptionDogCreate, id_dog: int
 
 def unadopt_dog(db: Session, adoption_dog: AdoptionDog):
     dog = db.query(AdoptedDog).filter(AdoptedDog.id == adoption_dog.id).first()
+    print(dog)
     try:
         db.add(adoption_dog)
         if dog is not None:
             db.delete(dog)
         db.commit()
         return {"detail": "Perro des adoptado"}
-    except IntegrityError:
+    except IntegrityError as e:
         db.rollback()
-        return None
+        return {"detail": e}
+
+
+def is_the_owner_whit_more_than_a_dog(db, owner_id: int) -> bool:
+    if len(db.query(AdoptedDog).filter(AdoptedDog.owner_id == owner_id).all()) > 1:
+        return True
+    else:
+        return False
