@@ -57,4 +57,4 @@ jobs:
           az containerapp update \
             --name poliperritosback \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-            --image ${{ secrets.DOCKER_HUB_USERNAME }}/poliperros:${{ github.sha }}
+            --image ${{ secrets.DOCKER_HUB_USERNAME }}/poliperritos:${{ github.sha }}
