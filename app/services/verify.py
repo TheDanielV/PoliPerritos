@@ -1,7 +1,7 @@
 import re
 
 
-def verify_password_(password: str) -> bool:
+def verify_structure_password(password: str) -> bool:
     if len(password) < 8:
         return False
     patron = r'(?=.*[A-Z])(?=.*\d)'
@@ -14,7 +14,7 @@ def verify_email(email: str) -> bool:
 
 
 def verify_cellphone_number(cellphone: str) -> bool:
-    if 8 > len(cellphone) >= 6:
+    if 10 >= len(cellphone) >= 7:
         patron = r'^\d+$'
         return bool(re.search(patron, cellphone))
     else:

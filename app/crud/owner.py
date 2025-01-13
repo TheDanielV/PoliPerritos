@@ -1,4 +1,6 @@
 # MecanicaMs/app/crud/dog.py
+import binascii
+
 from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -38,6 +40,25 @@ def read_owner_by_id(db: Session, owner_id: int):
     if owner:
         owner.decrypt_owner_data()
     return owner
+
+
+def get_all_owners(db: Session):
+    """
+     Devuelve una lista de dueños estáticos existentes.
+
+     Parameters:
+     - db (Session): La sesión de base de datos de SQLAlchemy.
+
+     Returns:
+
+     """
+    owners = db.query(Owner).all()
+    for owner in owners:
+        try:
+            owner.decrypt_owner_data()
+        except binascii.Error:
+            pass
+    return owners
 
 
 def update_owner_by_id(db: Session, owner: OwnerCreate, owner_id: int):

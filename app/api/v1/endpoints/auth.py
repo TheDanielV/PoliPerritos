@@ -18,7 +18,7 @@ from app.services.crypt import verify_password
 from app.services.email_service import send_email
 from app.services.generator import user_generator
 from app.services.multi_crud_service import reset_password
-from app.services.verify import verify_password_, verify_email
+from app.services.verify import verify_structure_password, verify_email
 
 router = APIRouter()
 
@@ -63,7 +63,7 @@ def create_new_auth_user(user: UserCreate,
         raise HTTPException(status_code=403, detail="Not enough permissions")
     if not verify_email(user.email):
         raise HTTPException(status_code=400, detail="Correo inválido")
-    if not verify_password_(user.password):
+    if not verify_structure_password(user.password):
         raise HTTPException(status_code=400, detail="La contraseña debe contener almenos una letra y un numero")
     auth_user = create_auth_user(db, user)
     return auth_user
@@ -200,7 +200,7 @@ def update_user_password(actual_password: str,
        """
     if current_user.role.value not in ALL_AUTH_ROLES:
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    if not verify_password_(new_password):
+    if not verify_structure_password(new_password):
         raise HTTPException(status_code=400, detail="La contraseña debe contener almenos una letra y un numero")
     user = update_auth_user_password(db, current_user.username, actual_password, new_password)
     return user
@@ -303,7 +303,7 @@ async def reset_forgotten_password(
                 - Longitud de 8 caracteres
                 - Un caracter especial
         """
-    if not verify_password_(new_password):
+    if not verify_structure_password(new_password):
         raise HTTPException(status_code=400, detail="La contraseña debe contener almenos una letra y un numero")
     return reset_password(db, code, new_password)
 

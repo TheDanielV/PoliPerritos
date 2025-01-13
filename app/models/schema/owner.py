@@ -20,6 +20,11 @@ class OwnerUpdate(BaseModel):
     cellphone: Optional[str]
 
 
+class OwnerSecureResponse(BaseModel):
+    id: int
+    name: str
+
+
 class OwnerResponse(OwnerBase):
     id: int
 
