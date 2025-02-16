@@ -66,7 +66,7 @@ async def get_applicants_by_course(course_id: int,
     Lee todas las visitas.
 
     """
-    if current_user.role.value not in [Role.ADMIN, Role.AUXILIAR]:
+    if current_user.role.value not in [Role.ADMIN]:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     applicant_raw = read_all_applicants_by_course(db, course_id)
     if not applicant_raw:

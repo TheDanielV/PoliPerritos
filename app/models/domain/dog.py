@@ -1,8 +1,7 @@
 # app/models/domain/dog.py
 from enum import Enum
 
-from sqlalchemy import Column, Integer, String, ForeignKey, Date, Boolean, Enum as SQLAEnum, Text
-from sqlalchemy.dialects.mysql import LONGBLOB
+from sqlalchemy import Column, Integer, String, ForeignKey, Date, Boolean, Enum as SQLAEnum, Text, LargeBinary
 from sqlalchemy.orm import relationship
 from app.models.schema.owner import OwnerCreate
 from app.models.domain.owner import Owner
@@ -24,7 +23,7 @@ class Dog(Base):
     about = Column(Text, nullable=True)
     age = Column(Integer, nullable=False)
     is_vaccinated = Column(Boolean, unique=False, nullable=False)
-    image = Column(LONGBLOB, nullable=True)
+    image = Column(LargeBinary, nullable=True)
     gender = Column(SQLAEnum(Gender), default=False, nullable=False)
     entry_date = Column(Date, nullable=True)
     is_sterilized = Column(Boolean, unique=False, nullable=False)

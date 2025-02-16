@@ -1,5 +1,6 @@
 import os
 
+import sqlalchemy
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -13,7 +14,7 @@ DATABASE_URL = "mysql+pymysql://" + os.getenv("DATABASE_USER") + ":"+os.getenv("
 engine = create_engine(DATABASE_URL, echo=True)
 
 # Crear una clase base para los modelos
-Base = declarative_base()
+Base = sqlalchemy.orm.declarative_base()
 
 # Crear un sessionmaker
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

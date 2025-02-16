@@ -86,7 +86,7 @@ async def create_new_static_dog(dog: StaticDogCreate,
     - **operation** (optional): Especifica la/las operaciones del perro.
     """
 
-    if current_user.role.value not in [Role.ADMIN, Role.AUXILIAR]:
+    if current_user.role.value not in [Role.ADMIN]:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     image_data = None
     if dog.image:
@@ -199,7 +199,7 @@ async def update_a_static_dog(id_dog: int,
     - **operation** (optional): Especifica la/las operaciones del perro.
     """
     # TODO validar en caso de que se actualice también el id
-    if current_user.role.value not in [Role.ADMIN, Role.AUXILIAR]:
+    if current_user.role.value not in [Role.ADMIN]:
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
     if dog.image:
@@ -295,7 +295,7 @@ def create_new_adoption_dog(dog: AdoptionDogCreate, db: Session = Depends(get_db
         - **false**: El perro no esta desparasitado.
     - **operation** (optional): Especifica la/las operaciones del perro.
     """
-    if current_user.role.value not in [Role.ADMIN, Role.AUXILIAR]:
+    if current_user.role.value not in [Role.ADMIN]:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     image_data = None
     if dog.image:
@@ -342,7 +342,7 @@ def adopt_dog_by_id(dog_id: int, adoption_date: date, owner: OwnerCreate, db: Se
     - **direction** (required): Dirección del dueño.
     - **cellphone** (required): Teléfono del dueño.
     """
-    if current_user.role.value not in [Role.ADMIN, Role.AUXILIAR]:
+    if current_user.role.value not in [Role.ADMIN]:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     adoption_dog = read_adoption_dog_by_id(db, dog_id)
 
@@ -374,7 +374,7 @@ def adopt_dog_by_id_and_existing_owner(dog_id: int, adoption_date: date, owner_i
     - **adoption_date** (required): Fecha de la adopción en formatoYYYY-MM-DD.
     - **owner_id** (required): Id de un Dueño existente.
     """
-    if current_user.role.value not in [Role.ADMIN, Role.AUXILIAR]:
+    if current_user.role.value not in [Role.ADMIN]:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     adoption_dog = read_adoption_dog_by_id(db, dog_id)
     if adoption_dog is None:
@@ -481,8 +481,7 @@ async def update_an_adoption_dog(id_dog: int,
         - **false**: El perro no esta desparasitado.
     - **operation** (optional): Especifica la/las operaciones del perro.
     """
-    # TODO validar en caso de que se actualice también el id
-    if current_user.role.value not in [Role.ADMIN, Role.AUXILIAR]:
+    if current_user.role.value not in [Role.ADMIN]:
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
     if dog.image:
@@ -515,7 +514,7 @@ def delete_adoption_dog_by_id(id_adoption_dog: int, db: Session = Depends(get_db
     """
     Endpoint para borrar un perro de adopcion.
     """
-    if current_user.role.value not in [Role.ADMIN, Role.AUXILIAR]:
+    if current_user.role.value not in [Role.ADMIN]:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     dog_response = delete_an_adoption_dog_by_id(db, id_adoption_dog)
     if dog_response:
@@ -614,7 +613,7 @@ async def update_an_adopted_dog(id_dog: int,
         - **false**: El perro no esta desparasitado.
     - **operation** (optional): Especifica la/las operaciones del perro.
     """
-    if current_user.role.value not in [Role.ADMIN, Role.AUXILIAR]:
+    if current_user.role.value not in [Role.ADMIN]:
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
     if dog.image:
@@ -644,7 +643,7 @@ async def update_an_adopted_dog(id_dog: int,
 @router.post('/adopted_dog/unadopt/{dog_id}/', response_model=dict)
 def unadopt_dog_by_id(dog_id: int, db: Session = Depends(get_db),
                       current_user: TokenData = Depends(get_current_user)):
-    if current_user.role.value not in [Role.ADMIN, Role.AUXILIAR]:
+    if current_user.role.value not in [Role.ADMIN]:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     adopted_dog = read_adopted_dogs_by_id(db, dog_id)
     result = un_adopt_dog_service(db, adopted_dog)

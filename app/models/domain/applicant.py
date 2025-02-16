@@ -1,4 +1,4 @@
-from sqlalchemy import Table, Column, Integer, ForeignKey, String
+from sqlalchemy import Table, Column, Integer, ForeignKey, String, LargeBinary
 from sqlalchemy.dialects.mysql import LONGBLOB
 from sqlalchemy.orm import relationship
 
@@ -14,7 +14,7 @@ class Applicant(Base):
     last_name = Column(String(255), nullable=False)
     email = Column(String(255), nullable=False)
     cellphone = Column(String(255), nullable=False)
-    image = Column(LONGBLOB, nullable=False)
+    image = Column(LargeBinary, nullable=False)
 
     # Relación muchos a muchos con Course
     course_id = Column(Integer, ForeignKey('course.id'), nullable=False)

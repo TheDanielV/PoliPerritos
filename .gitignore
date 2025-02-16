@@ -8,3 +8,5 @@
 /alembic/versions/c81a3439d4ae_admin_seed_and_visit_relations.py
 /alembic/versions/e34128e32120_chaange_dog_description_to_type_text.py
 /alembic/versions/ee056f008f32_update_relationship_beetween_token_and_.py
+
+.qodo
