@@ -2,6 +2,7 @@
 from enum import Enum
 
 from sqlalchemy import Column, Integer, String, ForeignKey, Date, Boolean, Enum as SQLAEnum, Text, LargeBinary
+from sqlalchemy.dialects.mysql import LONGBLOB
 from sqlalchemy.orm import relationship
 from app.models.schema.owner import OwnerCreate
 from app.models.domain.owner import Owner

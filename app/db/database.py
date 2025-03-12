@@ -8,7 +8,14 @@ from sqlalchemy.orm import sessionmaker
 
 load_dotenv()  # Cargar variables desde .env
 
-DATABASE_URL = "mysql+pymysql://" + os.getenv("DATABASE_USER") + ":"+os.getenv("DATABASE_PASSWORD")+"@"+os.getenv("DATABASE_HOST")+"/"+os.getenv("DATABASE_NAME")
+DATABASE_URL = (
+    f"mssql+pyodbc://{os.getenv('DATABASE_USER')}:{os.getenv('DATABASE_PASSWORD')}"
+    f"@{os.getenv('DATABASE_HOST')},{os.getenv('DATABASE_PORT')}/"
+    f"{os.getenv('DATABASE_NAME')}?driver=ODBC+Driver+18+for+SQL+Server"
+    "&Encrypt=yes&TrustServerCertificate=no"
+    "&hostNameInCertificate=*.database.windows.net&loginTimeout=60"
+)
+
 
 # Crear el motor de la base de datos
 engine = create_engine(DATABASE_URL, echo=True)
