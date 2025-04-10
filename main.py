@@ -4,7 +4,7 @@ from app.api.v1.endpoints import dog, owner, auth, visit, course, applicant
 from app.core.init_data import create_admin_user
 from app.db.init_db import init_db
 
-app = FastAPI()
+app = FastAPI(root_path="/api-web")
 
 origins = ["*"]
 
